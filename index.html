@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Gone Campin' — a browser-based wilderness survival game. Gather resources, manage your stats, and build a Signal Fire before the wilderness takes you." />
+  <title>Gone Campin' — A Wilderness Survival Game</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <header class="hero">
+    <p class="hero__eyebrow">&#9652; Wilderness Survival &#9652;</p>
+    <h1 class="hero__title">Gone Campin<span class="flame">'</span></h1>
+    <p class="hero__tagline">Some people don't come back.</p>
+    <p class="hero__subtitle">A Wilderness Survival Game</p>
+    <a href="setup.html" class="btn-primary hero__cta">Begin Survival</a>
+  </header>
+
+  <!-- ── About ─────────────────────────────────────────────── -->
+  <main>
+    <div class="container">
+      <section class="content-section" aria-labelledby="about-heading">
+        <h2 class="section-heading" id="about-heading">About the Game</h2>
+        <p class="about-text">
+          Gone Campin' drops you alone into one of several hostile biomes — dense boreal forest,
+          scorching desert, frozen tundra, or fog-choked swampland — with nothing but your wits
+          and whatever you can scavenge. Every decision costs time, every night is more dangerous
+          than the last, and the wilderness does not care whether you make it home.
+        </p>
+        <br />
+        <p class="about-text">
+          Manage five survival stats, craft tools and shelter from raw materials, and navigate
+          random events that can flip a comfortable camp into a desperate fight for your life.
+          Your only way out: build a Signal Fire large enough to be seen from the sky.
+        </p>
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ── How to Play ─────────────────────────────────────── -->
+      <section class="content-section" aria-labelledby="htp-heading">
+        <h2 class="section-heading" id="htp-heading">How to Play</h2>
+        <div class="htp-grid">
+
+          <div class="htp-card">
+            <span class="htp-card__icon">🌄</span>
+            <p class="htp-card__title">Day &amp; Night Phases</p>
+            <p class="htp-card__body">
+              Each day is split into three phases:
+              <strong>Morning</strong>, <strong>Afternoon</strong>, and <strong>Night</strong>.
+              Conditions change across phases — temperatures drop at night, predators grow bolder,
+              and certain resources only appear at specific times.
+            </p>
+          </div>
+
+          <div class="htp-card">
+            <span class="htp-card__icon">⚡</span>
+            <p class="htp-card__title">Action Points</p>
+            <p class="htp-card__body">
+              You have a limited pool of <strong>Action Points (AP)</strong> each phase. Every
+              activity — foraging, building, resting, exploring — costs AP. Spend them wisely;
+              running dry in the wrong place can be fatal.
+            </p>
+          </div>
+
+          <div class="htp-card">
+            <span class="htp-card__icon">📊</span>
+            <p class="htp-card__title">Your 5 Stats</p>
+            <ul class="stat-list">
+              <li><strong>❤️ Health</strong> — your life. Reaches zero and it's over.</li>
+              <li><strong>🍖 Hunger</strong> — find food or starve.</li>
+              <li><strong>💧 Thirst</strong> — dehydration kills faster than hunger.</li>
+              <li><strong>⚡ Energy</strong> — low energy reduces AP next phase.</li>
+              <li><strong>🔥 Warmth</strong> — hypothermia is a slow, quiet death.</li>
+            </ul>
+          </div>
+
+          <div class="htp-card">
+            <span class="htp-card__icon">🪓</span>
+            <p class="htp-card__title">Crafting System</p>
+            <p class="htp-card__body">
+              Combine raw materials found in the wild to craft <strong>tools</strong>,
+              <strong>shelter</strong>, <strong>traps</strong>, and <strong>medicine</strong>.
+              Better tools unlock faster gathering; better shelter guards your Warmth through
+              the night.
+            </p>
+          </div>
+
+          <div class="htp-card">
+            <span class="htp-card__icon">🎲</span>
+            <p class="htp-card__title">Random Events</p>
+            <p class="htp-card__body">
+              Each phase can trigger a <strong>random event</strong> — a rainstorm that
+              refills your water but chills you to the bone, an animal encounter, a strange
+              discovery, or a streak of unexpected good fortune. Stay adaptable.
+            </p>
+          </div>
+
+          <div class="htp-card">
+            <span class="htp-card__icon">🔥</span>
+            <p class="htp-card__title">Win Condition</p>
+            <p class="htp-card__body">
+              Survival is not the goal — <strong>rescue</strong> is. Gather enough materials
+              to construct a <strong>Signal Fire</strong> at your camp. Light it, keep it
+              burning, and hope someone is watching the sky.
+            </p>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <p class="site-footer__text">Good luck. You'll need it.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
