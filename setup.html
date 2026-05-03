@@ -3,18 +3,570 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Gone Campin' — choose your survivor name and biome before entering the wilderness." />
-  <title>Gone Campin' — Survivor Setup</title>
+  <meta name="description" content="Gone Campin' — name your survivor and choose a biome before entering the wilderness." />
+  <title>Gone Campin' — Choose Your Fate</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── Setup Page Layout ──────────────────────────────────── */
+    .setup-nav {
+      padding: 1.5rem 1.5rem 0;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .setup-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    .setup-title {
+      font-family: var(--font-pixel);
+      font-size: clamp(0.65rem, 2vw, 0.95rem);
+      color: var(--pixel-green);
+      text-align: center;
+      text-shadow: 3px 3px 0 #000;
+      line-height: 1.8;
+      margin-bottom: 3rem;
+    }
+
+    .setup-title::before { content: '[ '; color: var(--pixel-orange); }
+    .setup-title::after  { content: ' ]'; color: var(--pixel-orange); }
+
+    /* ── Name Input ─────────────────────────────────────────── */
+    .name-section {
+      margin-bottom: 3.5rem;
+    }
+
+    .setup-label {
+      display: block;
+      font-family: var(--font-pixel);
+      font-size: 0.52rem;
+      color: var(--pixel-green);
+      letter-spacing: 0.06em;
+      line-height: 2;
+      margin-bottom: 0.75rem;
+    }
+
+    .setup-input {
+      display: block;
+      width: 100%;
+      max-width: 500px;
+      background: #111;
+      border: 2px solid var(--pixel-green);
+      border-radius: 0;
+      color: var(--text-primary);
+      font-family: var(--font-terminal);
+      font-size: 1.5rem;
+      padding: 0.7rem 1rem;
+      box-shadow: 4px 4px 0 #000;
+      outline: none;
+      transition: border-color 0.1s, box-shadow 0.1s;
+      line-height: 1.4;
+    }
+
+    .setup-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .setup-input:focus {
+      border-color: var(--pixel-orange);
+      box-shadow: 4px 4px 0 var(--pixel-orange);
+    }
+
+    .name-hint {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    /* ── Biome Section ──────────────────────────────────────── */
+    .biome-section {
+      margin-bottom: 3.5rem;
+    }
+
+    .biome-subtitle {
+      font-family: var(--font-pixel);
+      font-size: 0.62rem;
+      color: var(--pixel-green);
+      line-height: 1.8;
+      margin-bottom: 1.75rem;
+    }
+
+    .biome-subtitle::before { content: '[ '; color: var(--pixel-orange); }
+    .biome-subtitle::after  { content: ' ]'; color: var(--pixel-orange); }
+
+    /* ── Biome Grid ─────────────────────────────────────────── */
+    .biome-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    /* ── Biome Card ─────────────────────────────────────────── */
+    .biome-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-green);
+      border-radius: 0;
+      padding: 1.4rem 1.5rem 1.2rem;
+      box-shadow: 4px 4px 0 #000;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: border-color 0.1s, box-shadow 0.1s;
+      outline: none;
+    }
+
+    .biome-card:hover {
+      border-color: var(--pixel-orange);
+      box-shadow: 6px 6px 0 var(--pixel-orange);
+    }
+
+    .biome-card:focus-visible {
+      border-color: var(--pixel-orange);
+      box-shadow: 6px 6px 0 var(--pixel-orange);
+    }
+
+    .biome-card.selected {
+      border-color: var(--pixel-orange);
+      box-shadow: 4px 4px 0 var(--pixel-orange);
+    }
+
+    /* Selected badge — hidden until .selected */
+    .biome-card__selected-badge {
+      display: none;
+      position: absolute;
+      top: 0.55rem;
+      right: 0.6rem;
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      color: var(--pixel-orange);
+      letter-spacing: 0.05em;
+      line-height: 2;
+    }
+
+    .biome-card.selected .biome-card__selected-badge {
+      display: block;
+    }
+
+    /* Card header row */
+    .biome-card__header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .biome-card__icon {
+      font-size: 2.1rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+
+    .biome-card__meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .biome-card__name {
+      font-family: var(--font-pixel);
+      font-size: 0.46rem;
+      color: var(--pixel-green);
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Difficulty badges */
+    .diff-badge {
+      display: inline-block;
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 0;
+      line-height: 1.8;
+      letter-spacing: 0.06em;
+      border: 1px solid transparent;
+    }
+
+    .diff--easy        { background: var(--pixel-green);  color: #000; border-color: #166534; }
+    .diff--medium      { background: var(--pixel-orange); color: #000; border-color: #7c2d12; }
+    .diff--hard        { background: var(--pixel-red);    color: #fff; border-color: #7f1d1d; }
+    .diff--medium-hard { background: #dc4a26;             color: #fff; border-color: #7c1d0e; }
+
+    /* Flavor text */
+    .biome-card__flavor {
+      font-family: var(--font-terminal);
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 0.85rem;
+      font-style: italic;
+    }
+
+    /* Modifier tags */
+    .biome-card__mods {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .mod-tag {
+      font-family: var(--font-terminal);
+      font-size: 0.95rem;
+      padding: 0.1rem 0.5rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      background: rgba(74, 222, 128, 0.07);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+      border-radius: 0;
+      white-space: nowrap;
+    }
+
+    .mod-tag--warn {
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.07);
+      border-color: rgba(251, 191, 36, 0.28);
+    }
+
+    .mod-tag--danger {
+      color: var(--pixel-red);
+      background: rgba(239, 68, 68, 0.07);
+      border-color: rgba(239, 68, 68, 0.28);
+    }
+
+    /* ── Begin Button Area ──────────────────────────────────── */
+    .begin-section {
+      text-align: center;
+    }
+
+    .begin-btn {
+      font-size: 0.62rem;
+      padding: 1.2rem 3.2rem;
+      line-height: 1.6;
+    }
+
+    .begin-btn:disabled,
+    .begin-btn[disabled] {
+      background: #1e1e1e;
+      color: #3a3a3a;
+      border-color: #2a2a2a;
+      box-shadow: 2px 2px 0 #000;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .begin-status {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: var(--text-dim);
+      margin-top: 1rem;
+      letter-spacing: 0.04em;
+      min-height: 1.5em;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .biome-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .setup-title {
+        font-size: 0.55rem;
+        margin-bottom: 2rem;
+      }
+
+      .biome-card__name {
+        font-size: 0.4rem;
+      }
+
+      .biome-card__flavor {
+        font-size: 1rem;
+      }
+
+      .begin-btn {
+        font-size: 0.52rem;
+        padding: 1rem 2rem;
+      }
+    }
+
+    @media (min-width: 641px) and (max-width: 860px) {
+      .biome-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
 </head>
 <body>
 
-  <main class="page-shell">
-    <a href="index.html" class="back-link">Back to Home</a>
-    <h1>Survivor Setup</h1>
-    <p>Name your survivor and choose your biome. <br />This page is coming soon.</p>
+  <!-- ── Top Nav ───────────────────────────────────────────── -->
+  <nav class="setup-nav" aria-label="Page navigation">
+    <a href="index.html" class="back-link">BACK</a>
+  </nav>
+
+  <!-- ── Main Setup Form ───────────────────────────────────── -->
+  <main class="setup-page">
+
+    <h1 class="setup-title">CHOOSE YOUR FATE</h1>
+
+    <!-- ── Survivor Name ─────────────────────────────────────── -->
+    <section class="name-section" aria-labelledby="name-label">
+      <label class="setup-label" id="name-label" for="survivor-name">
+        &gt; SURVIVOR NAME:
+      </label>
+      <input
+        type="text"
+        id="survivor-name"
+        class="setup-input"
+        placeholder="Enter your name..."
+        maxlength="20"
+        autocomplete="off"
+        spellcheck="false"
+        aria-describedby="name-hint"
+      />
+      <p class="name-hint" id="name-hint">Max 20 characters.</p>
+    </section>
+
+    <!-- ── Biome Selection ───────────────────────────────────── -->
+    <section class="biome-section" aria-labelledby="biome-heading">
+      <h2 class="biome-subtitle" id="biome-heading">SELECT YOUR BIOME</h2>
+
+      <div class="biome-grid" role="radiogroup" aria-label="Biome selection">
+
+        <!-- 1 · Midwest Flatwoods -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="flatwoods">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">🌲</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">MIDWEST FLATWOODS</p>
+              <span class="diff-badge diff--easy">EASY</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Familiar terrain. Dense oak and maple.<br />A good place to learn."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag">FORAGE +10%</span>
+            <span class="mod-tag">BALANCED STATS</span>
+          </div>
+        </div>
+
+        <!-- 2 · Mountain Forest -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="mountain">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">🏔️</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">MOUNTAIN FOREST</p>
+              <span class="diff-badge diff--medium">MEDIUM</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Rocky slopes, thin air.<br />The views are beautiful. Die anyway."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag mod-tag--warn">WARMTH DRAIN +25%</span>
+            <span class="mod-tag">EXPLORE LOOT +20%</span>
+          </div>
+        </div>
+
+        <!-- 3 · Snowy Tundra -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="tundra">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">❄️</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">SNOWY TUNDRA</p>
+              <span class="diff-badge diff--hard">HARD</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Frozen wilderness. The cold doesn't hate you.<br />It just doesn't care."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag mod-tag--danger">WARMTH DRAIN +50%</span>
+            <span class="mod-tag mod-tag--danger">DAY LENGTH -1 AP</span>
+            <span class="mod-tag mod-tag--warn">WATER FROM SNOW ONLY</span>
+          </div>
+        </div>
+
+        <!-- 4 · Coastal Rainforest -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="rainforest">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">🌊</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">COASTAL RAINFOREST</p>
+              <span class="diff-badge diff--medium">MEDIUM</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Mist and rain. Always rain.<br />The forest is alive and watching."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag mod-tag--warn">FIRE START -20%</span>
+            <span class="mod-tag">FISHING +30%</span>
+          </div>
+        </div>
+
+        <!-- 5 · High Desert -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="desert">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">🌵</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">HIGH DESERT</p>
+              <span class="diff-badge diff--hard">HARD</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Scorching days. Freezing nights.<br />Thirst will take you before anything else."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag mod-tag--danger">THIRST DRAIN +50%</span>
+            <span class="mod-tag mod-tag--warn">EXTREME TEMP SWINGS</span>
+          </div>
+        </div>
+
+        <!-- 6 · Swamp / Bayou -->
+        <div class="biome-card"
+             role="radio"
+             aria-checked="false"
+             tabindex="0"
+             data-biome="swamp">
+          <span class="biome-card__selected-badge" aria-hidden="true">&gt; SELECTED</span>
+          <div class="biome-card__header">
+            <span class="biome-card__icon" aria-hidden="true">🌿</span>
+            <div class="biome-card__meta">
+              <p class="biome-card__name">SWAMP / BAYOU</p>
+              <span class="diff-badge diff--medium-hard">MEDIUM-HARD</span>
+            </div>
+          </div>
+          <p class="biome-card__flavor">
+            "Humid. Murky. Everything here<br />is trying to make you sick."
+          </p>
+          <div class="biome-card__mods" aria-label="Biome modifiers">
+            <span class="mod-tag mod-tag--warn">WATER ALWAYS UNPURIFIED</span>
+            <span class="mod-tag mod-tag--danger">HEALTH RISK +10%</span>
+          </div>
+        </div>
+
+      </div><!-- /.biome-grid -->
+    </section>
+
+    <!-- ── Begin Button ──────────────────────────────────────── -->
+    <div class="begin-section">
+      <button
+        id="begin-btn"
+        class="btn-primary begin-btn"
+        disabled
+        aria-disabled="true"
+      >
+        BEGIN SURVIVAL
+      </button>
+      <p class="begin-status" id="begin-status" aria-live="polite">
+        Enter a name and select a biome to continue.
+      </p>
+    </div>
+
   </main>
 
-  <script src="script.js"></script>
+  <script>
+    /* ── Biome modifier data ────────────────────────────────── */
+    const BIOME_MODIFIERS = {
+      flatwoods:  { foragingBonus: 0.10, warmthDrain: 1.0,  thirstDrain: 1.0,  fishingBonus: 0,    healthRisk: 0    },
+      mountain:   { foragingBonus: 0,    warmthDrain: 1.25, thirstDrain: 1.0,  fishingBonus: 0,    healthRisk: 0    },
+      tundra:     { foragingBonus: 0,    warmthDrain: 1.50, thirstDrain: 1.0,  fishingBonus: 0,    healthRisk: 0,   apPenalty: 1 },
+      rainforest: { foragingBonus: 0,    warmthDrain: 1.0,  thirstDrain: 1.0,  fishingBonus: 0.30, healthRisk: 0,   firePenalty: 0.20 },
+      desert:     { foragingBonus: 0,    warmthDrain: 1.0,  thirstDrain: 1.50, fishingBonus: 0,    healthRisk: 0    },
+      swamp:      { foragingBonus: 0,    warmthDrain: 1.0,  thirstDrain: 1.0,  fishingBonus: 0,    healthRisk: 0.10 }
+    };
+
+    /* ── State ──────────────────────────────────────────────── */
+    let selectedBiome = null;
+
+    const nameInput  = document.getElementById('survivor-name');
+    const beginBtn   = document.getElementById('begin-btn');
+    const statusMsg  = document.getElementById('begin-status');
+    const biomeCards = document.querySelectorAll('.biome-card');
+
+    /* ── Helpers ────────────────────────────────────────────── */
+    function getStatusText(hasName, hasBiome) {
+      if (!hasName && !hasBiome) return 'Enter a name and select a biome to continue.';
+      if (!hasName)  return 'Enter a survivor name to continue.';
+      if (!hasBiome) return 'Select a biome to continue.';
+      return '> Ready. Good luck out there.';
+    }
+
+    function updateBeginButton() {
+      const hasName  = nameInput.value.trim().length > 0;
+      const hasBiome = selectedBiome !== null;
+      const ready    = hasName && hasBiome;
+
+      beginBtn.disabled     = !ready;
+      beginBtn.ariaDisabled = String(!ready);
+      statusMsg.textContent = getStatusText(hasName, hasBiome);
+    }
+
+    function selectBiome(card) {
+      biomeCards.forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-checked', 'false');
+      });
+      card.classList.add('selected');
+      card.setAttribute('aria-checked', 'true');
+      selectedBiome = card.dataset.biome;
+      updateBeginButton();
+    }
+
+    /* ── Event Listeners ────────────────────────────────────── */
+    nameInput.addEventListener('input', updateBeginButton);
+
+    biomeCards.forEach(card => {
+      card.addEventListener('click', () => selectBiome(card));
+
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectBiome(card);
+        }
+      });
+    });
+
+    beginBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name || !selectedBiome) return;
+
+      localStorage.setItem('survivorName', name);
+      localStorage.setItem('biome', selectedBiome);
+      localStorage.setItem('biomeModifiers', JSON.stringify(BIOME_MODIFIERS[selectedBiome]));
+
+      window.location.href = 'game.html';
+    });
+  </script>
+
 </body>
 </html>
