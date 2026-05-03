@@ -3,18 +3,1511 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Gone Campin' — the wilderness awaits. Survive." />
+  <meta name="description" content="Gone Campin' — survive the wilderness, build a Signal Fire, get rescued." />
   <title>Gone Campin' — Survive</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* =========================================================
+       GAME LAYOUT — page fills the viewport, no body scroll
+       ========================================================= */
+    html, body { height: 100%; overflow: hidden; }
+
+    .game-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── 1. SKY BANNER ──────────────────────────────────────── */
+    #sky-banner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 1.25rem;
+      transition: background 1.5s ease;
+      border-bottom: 3px solid #000;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+
+    .phase-morning   { background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%); }
+    .phase-afternoon { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); }
+    .phase-dusk      { background: linear-gradient(135deg, #9a3412 0%, #ea580c 100%); }
+    .phase-night     { background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }
+
+    .banner-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .banner-game-title {
+      font-family: var(--font-pixel);
+      font-size: 0.45rem;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 2px 2px 0 #000;
+      line-height: 2;
+      letter-spacing: 0.06em;
+    }
+
+    .banner-game-title .flame {
+      color: #fbbf24;
+    }
+
+    .banner-center {
+      text-align: center;
+    }
+
+    #day-counter {
+      font-family: var(--font-pixel);
+      font-size: clamp(0.65rem, 1.8vw, 1rem);
+      color: #fff;
+      text-shadow: 3px 3px 0 #000;
+      line-height: 1.6;
+      letter-spacing: 0.06em;
+    }
+
+    #phase-label {
+      font-family: var(--font-terminal);
+      font-size: clamp(1.3rem, 3vw, 1.9rem);
+      color: rgba(255,255,255,0.95);
+      letter-spacing: 0.14em;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+      line-height: 1.2;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Phase arc — 7 dots */
+    .phase-arc {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .arc-dot {
+      font-size: 0.75rem;
+      line-height: 1;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.4s, text-shadow 0.4s;
+      user-select: none;
+    }
+
+    .arc-dot.active {
+      color: #fff;
+      text-shadow: 0 0 6px rgba(255,255,255,0.7);
+    }
+
+    .arc-dot--night {
+      color: rgba(148, 163, 220, 0.3);
+    }
+
+    .arc-dot--night.active {
+      color: #c7d2fe;
+      text-shadow: 0 0 8px rgba(199, 210, 254, 0.6);
+    }
+
+    .arc-separator {
+      color: rgba(255,255,255,0.25);
+      font-size: 0.75rem;
+      line-height: 1;
+      font-family: var(--font-terminal);
+      user-select: none;
+    }
+
+    .banner-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.1rem;
+    }
+
+    #survivor-display {
+      font-family: var(--font-pixel);
+      font-size: 0.42rem;
+      color: #fff;
+      text-shadow: 2px 2px 0 #000;
+      line-height: 2;
+      letter-spacing: 0.06em;
+    }
+
+    #biome-display {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.1em;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    }
+
+    /* ── 2. STAT BARS ROW ───────────────────────────────────── */
+    .stats-row {
+      background: #0e0e0e;
+      border-bottom: 2px solid var(--border-green);
+      box-shadow: 0 2px 0 #000;
+      padding: 0.65rem 1.25rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .stats-bars {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.6rem 1.1rem;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+    }
+
+    .stat-item__header {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .stat-item__icon {
+      font-size: 0.85rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-item__label {
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      line-height: 2;
+      flex: 1;
+    }
+
+    .stat-item__value {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    /* Critical state: flashing bar + red value */
+    .stat-critical .stat-bar__fill {
+      animation: stat-flash 0.5s steps(1) infinite;
+    }
+
+    .stat-critical .stat-item__value {
+      color: var(--pixel-red);
+      animation: stat-flash 0.5s steps(1) infinite;
+    }
+
+    @keyframes stat-flash {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    /* AP Counter */
+    .ap-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    #ap-counter {
+      font-family: var(--font-pixel);
+      font-size: 0.5rem;
+      color: var(--pixel-green);
+      letter-spacing: 0.08em;
+      line-height: 2;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    /* ── 3. MAIN GAME AREA ──────────────────────────────────── */
+    .game-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0; /* allow shrink inside grid */
+      border-bottom: 2px solid var(--border-green);
+      overflow: hidden;
+    }
+
+    .actions-panel,
+    .inventory-panel {
+      padding: 1rem 1.25rem;
+      overflow-y: auto;
+    }
+
+    .actions-panel {
+      border-right: 2px solid var(--border-green);
+    }
+
+    /* Custom scrollbar */
+    .actions-panel::-webkit-scrollbar,
+    .inventory-panel::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .actions-panel::-webkit-scrollbar-track,
+    .inventory-panel::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    .actions-panel::-webkit-scrollbar-thumb,
+    .inventory-panel::-webkit-scrollbar-thumb {
+      background: var(--pixel-green);
+      border-radius: 0;
+    }
+
+    /* Panel headers */
+    .panel-header {
+      font-family: var(--font-pixel);
+      font-size: 0.58rem;
+      color: var(--pixel-green);
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .panel-header::before { content: '[ '; color: var(--pixel-orange); }
+    .panel-header::after  { content: ' ]'; color: var(--pixel-orange); }
+
+    /* ── Action Buttons ─────────────────────────────────────── */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+
+    .action-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border-green);
+      border-radius: 0;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      padding: 0.55rem 0.65rem;
+      box-shadow: 3px 3px 0 #000;
+      transition: border-color 0.08s, box-shadow 0.08s, transform 0.07s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-align: left;
+      width: 100%;
+      position: relative;
+    }
+
+    .action-btn:hover:not(:disabled) {
+      border-color: var(--pixel-orange);
+      box-shadow: 3px 3px 0 var(--pixel-orange);
+    }
+
+    .action-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 #000;
+    }
+
+    .action-btn:disabled {
+      background: #111;
+      color: #2d2d2d;
+      border-color: #1e1e1e;
+      box-shadow: 2px 2px 0 #000;
+      cursor: not-allowed;
+    }
+
+    .action-btn__icon {
+      font-size: 1.1rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .action-btn__label {
+      flex: 1;
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      line-height: 1.3;
+    }
+
+    .action-btn__ap {
+      font-family: var(--font-pixel);
+      font-size: 0.35rem;
+      background: rgba(0,0,0,0.5);
+      color: var(--pixel-green);
+      border: 1px solid rgba(74, 222, 128, 0.4);
+      padding: 0.15rem 0.3rem;
+      line-height: 1.8;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+
+    .action-btn:disabled .action-btn__ap {
+      color: #2a2a2a;
+      border-color: #1a1a1a;
+    }
+
+    /* Tooltip on disabled buttons */
+    .action-btn[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0a0a0a;
+      color: var(--pixel-orange);
+      font-family: var(--font-terminal);
+      font-size: 0.95rem;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--pixel-orange);
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+      line-height: 1.5;
+    }
+
+    /* Night-only badge */
+    .action-btn__note {
+      font-family: var(--font-terminal);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    /* ── Inventory Tabs ─────────────────────────────────────── */
+    .inv-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border-green);
+      margin-bottom: 0.85rem;
+      gap: 0;
+    }
+
+    .inv-tab {
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      padding: 0.45rem 0.75rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      background: transparent;
+      border: 2px solid transparent;
+      border-bottom: none;
+      border-radius: 0;
+      letter-spacing: 0.05em;
+      line-height: 2;
+      transition: color 0.1s, border-color 0.1s, background 0.1s;
+      margin-bottom: -2px;
+    }
+
+    .inv-tab:hover:not(.active) {
+      color: var(--pixel-orange);
+    }
+
+    .inv-tab.active {
+      color: var(--pixel-green);
+      border-color: var(--border-green);
+      border-bottom-color: var(--bg-deep);
+      background: var(--bg-deep);
+    }
+
+    .inv-pane {
+      display: none;
+    }
+
+    .inv-pane.active {
+      display: block;
+    }
+
+    /* Inventory items */
+    .inv-item {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.3rem 0.2rem;
+      border-bottom: 1px solid rgba(74, 222, 128, 0.08);
+    }
+
+    .inv-item:last-child {
+      border-bottom: none;
+    }
+
+    .inv-item__icon {
+      font-size: 1rem;
+      width: 1.4rem;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .inv-item__name {
+      font-family: var(--font-terminal);
+      font-size: 1.1rem;
+      flex: 1;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .inv-item__count {
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      color: var(--text-dim);
+      line-height: 2;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    .inv-item--stocked .inv-item__name  { color: var(--pixel-green); }
+    .inv-item--stocked .inv-item__count { color: var(--pixel-green); }
+
+    /* ── 4. EVENT LOG ───────────────────────────────────────── */
+    .event-log-section {
+      background: #090909;
+      border-top: 2px solid var(--border-green);
+      padding: 0.6rem 1.25rem 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .event-log-header {
+      font-family: var(--font-pixel);
+      font-size: 0.52rem;
+      color: var(--pixel-green);
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.45rem;
+    }
+
+    .event-log-header::before { content: '[ '; color: var(--pixel-orange); }
+    .event-log-header::after  { content: ' ]'; color: var(--pixel-orange); }
+
+    #event-log {
+      height: 110px;
+      overflow-y: auto;
+      padding: 0.4rem 0.6rem;
+      background: #050505;
+      border: 2px solid rgba(74, 222, 128, 0.18);
+      box-shadow: inset 2px 2px 0 #000;
+    }
+
+    #event-log::-webkit-scrollbar { width: 4px; }
+    #event-log::-webkit-scrollbar-track { background: #0a0a0a; }
+    #event-log::-webkit-scrollbar-thumb { background: var(--pixel-green); border-radius: 0; }
+
+    .log-entry {
+      font-family: var(--font-terminal);
+      font-size: 1.1rem;
+      line-height: 1.45;
+      display: block;
+    }
+
+    .log-info    { color: #4ade80; }
+    .log-warning { color: #f97316; }
+    .log-danger  { color: #ef4444; }
+    .log-event   { color: #facc15; }
+    .log-success { color: #86efac; }
+
+    /* ── CRAFT MODAL ────────────────────────────────────────── */
+    #craft-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 2px solid var(--border-green);
+      border-radius: 0;
+      box-shadow: 6px 6px 0 #000;
+      width: 100%;
+      max-width: 660px;
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 1.5rem 1.75rem;
+      position: relative;
+    }
+
+    .modal-box::-webkit-scrollbar { width: 4px; }
+    .modal-box::-webkit-scrollbar-track { background: #0a0a0a; }
+    .modal-box::-webkit-scrollbar-thumb { background: var(--pixel-green); border-radius: 0; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-green);
+    }
+
+    .modal-title {
+      font-family: var(--font-pixel);
+      font-size: 0.6rem;
+      color: var(--pixel-green);
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+
+    .modal-title::before { content: '[ '; color: var(--pixel-orange); }
+    .modal-title::after  { content: ' ]'; color: var(--pixel-orange); }
+
+    .modal-close {
+      font-family: var(--font-pixel);
+      font-size: 0.4rem;
+      color: var(--pixel-red);
+      background: transparent;
+      border: 1px solid var(--pixel-red);
+      border-radius: 0;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      line-height: 1.8;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .modal-close:hover {
+      background: var(--pixel-red);
+      color: #fff;
+    }
+
+    .modal-close:active {
+      transform: translate(1px, 1px);
+    }
+
+    /* Recipe grid */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+    }
+
+    .recipe-card {
+      background: var(--bg-deep);
+      border: 2px solid rgba(74, 222, 128, 0.25);
+      border-radius: 0;
+      padding: 0.9rem 1rem;
+      box-shadow: 3px 3px 0 #000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .recipe-card--signal-fire {
+      border-color: var(--pixel-yellow);
+      box-shadow: 3px 3px 0 var(--pixel-yellow);
+    }
+
+    .recipe-card--unavailable {
+      opacity: 0.4;
+    }
+
+    .recipe-card__result {
+      font-family: var(--font-pixel);
+      font-size: 0.45rem;
+      color: var(--pixel-green);
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+    }
+
+    .recipe-card--signal-fire .recipe-card__result {
+      color: var(--pixel-yellow);
+    }
+
+    .recipe-card__ingredients {
+      font-family: var(--font-terminal);
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .recipe-card__arrow {
+      color: var(--pixel-orange);
+    }
+
+    .recipe-card__output {
+      color: var(--pixel-green);
+    }
+
+    .recipe-craft-btn {
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      background: var(--pixel-green);
+      color: #000;
+      border: 1px solid #000;
+      border-radius: 0;
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #000;
+      letter-spacing: 0.05em;
+      line-height: 1.8;
+      transition: background 0.08s, transform 0.07s;
+      align-self: flex-start;
+    }
+
+    .recipe-craft-btn:hover:not(:disabled) { background: var(--pixel-orange); }
+
+    .recipe-craft-btn:active:not(:disabled) {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0 #000;
+    }
+
+    .recipe-craft-btn:disabled {
+      background: #1a1a1a;
+      color: #333;
+      border-color: #222;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── DEATH SCREEN ───────────────────────────────────────── */
+    #death-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      gap: 0.6rem;
+    }
+
+    .tombstone-art {
+      font-family: var(--font-terminal);
+      font-size: 1.35rem;
+      color: var(--text-dim);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 12px rgba(71, 85, 105, 0.4);
+    }
+
+    .death-title {
+      font-family: var(--font-pixel);
+      font-size: clamp(0.65rem, 2.5vw, 1rem);
+      color: var(--pixel-red);
+      text-shadow: 4px 4px 0 #000;
+      line-height: 1.6;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.06em;
+    }
+
+    .death-stat {
+      font-family: var(--font-terminal);
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      letter-spacing: 0.06em;
+    }
+
+    .death-stat span {
+      color: var(--text-primary);
+    }
+
+    .death-quip {
+      font-family: var(--font-terminal);
+      font-size: 1.25rem;
+      color: var(--text-dim);
+      font-style: italic;
+      margin: 0.8rem 0 1.4rem;
+      max-width: 420px;
+    }
+
+    /* ── WIN SCREEN ─────────────────────────────────────────── */
+    #win-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      gap: 0.6rem;
+    }
+
+    .win-helicopter {
+      font-size: 3.5rem;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      animation: heli-hover 2s ease-in-out infinite;
+    }
+
+    @keyframes heli-hover {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    .win-title {
+      font-family: var(--font-pixel);
+      font-size: clamp(0.75rem, 3vw, 1.2rem);
+      color: var(--pixel-green);
+      text-shadow: 4px 4px 0 #000, 0 0 24px rgba(74, 222, 128, 0.35);
+      line-height: 1.6;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.8rem;
+    }
+
+    .win-stat {
+      font-family: var(--font-terminal);
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      letter-spacing: 0.06em;
+    }
+
+    .win-stat span {
+      color: var(--pixel-green);
+    }
+
+    .achievement-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      justify-content: center;
+      margin: 1.2rem 0;
+      max-width: 480px;
+    }
+
+    .achievement-slot {
+      width: 54px;
+      height: 54px;
+      background: #111;
+      border: 2px solid #1e1e1e;
+      box-shadow: 2px 2px 0 #000;
+    }
+
+    /* Shared overlay button row */
+    .overlay-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.4rem;
+    }
+
+    .overlay-buttons .btn-primary,
+    .overlay-buttons .btn-danger {
+      font-size: 0.52rem;
+      padding: 0.9rem 1.8rem;
+    }
+
+    /* ── ACHIEVEMENT TOAST ──────────────────────────────────── */
+    #achievement-toast {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-card);
+      border: 2px solid var(--pixel-yellow);
+      border-radius: 0;
+      box-shadow: 4px 4px 0 #000;
+      padding: 0.9rem 1.1rem;
+      z-index: 3000;
+      min-width: 260px;
+      max-width: 340px;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    #achievement-toast.toast-show {
+      display: flex;
+      animation: toast-slide-up 0.25s steps(5) forwards,
+                 toast-fade-out 0.4s 3.6s forwards;
+    }
+
+    @keyframes toast-slide-up {
+      from { transform: translateY(16px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    @keyframes toast-fade-out {
+      from { opacity: 1; }
+      to   { opacity: 0; pointer-events: none; }
+    }
+
+    .toast-medal {
+      font-size: 1.5rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .toast-content { flex: 1; }
+
+    .toast-title {
+      font-family: var(--font-pixel);
+      font-size: 0.4rem;
+      color: var(--pixel-yellow);
+      line-height: 2;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.15rem;
+    }
+
+    .toast-desc {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      html, body { overflow: auto; }
+
+      .game-shell {
+        height: auto;
+        overflow: visible;
+      }
+
+      #sky-banner {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        text-align: center;
+      }
+
+      .banner-left  { align-items: center; }
+      .banner-right { align-items: center; }
+
+      .stats-bars {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem 1rem;
+      }
+
+      /* 5th stat spans both columns */
+      .stat-item:nth-child(5) {
+        grid-column: 1 / -1;
+      }
+
+      .game-main {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+
+      .actions-panel {
+        border-right: none;
+        border-bottom: 2px solid var(--border-green);
+        overflow: visible;
+      }
+
+      .inventory-panel { overflow: visible; }
+
+      #event-log { height: 130px; }
+
+      .recipe-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 701px) and (max-width: 960px) {
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-bars {
+        gap: 0.5rem 0.75rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
-  <main class="page-shell">
-    <a href="index.html" class="back-link">Back to Home</a>
-    <h1>Day 1 — The Wilderness</h1>
-    <p>The main game is under construction. <br />Check back soon — if you make it that long.</p>
-  </main>
+<div class="game-shell">
 
-  <script src="script.js"></script>
+  <!-- ═══════════════════════════════════════════════════════
+       1. SKY BANNER
+       ═══════════════════════════════════════════════════════ -->
+  <header id="sky-banner" class="sky-banner phase-morning" aria-label="Game status banner">
+
+    <div class="banner-left">
+      <span class="banner-game-title">GONE CAMPIN<span class="flame">'</span></span>
+    </div>
+
+    <div class="banner-center">
+      <div id="day-counter" aria-label="Current day">DAY 1</div>
+      <div id="phase-label" aria-label="Current phase">[ MORNING ]</div>
+      <div class="phase-arc" role="img" aria-label="Time-of-day arc: morning">
+        <!-- Positions 1–5 = day  |  6–7 = night -->
+        <span class="arc-dot active"         data-pos="1" title="Dawn">☀️</span>
+        <span class="arc-dot"                data-pos="2" title="Morning">○</span>
+        <span class="arc-dot"                data-pos="3" title="Afternoon">○</span>
+        <span class="arc-dot"                data-pos="4" title="Late Afternoon">○</span>
+        <span class="arc-dot"                data-pos="5" title="Dusk">○</span>
+        <span class="arc-separator"          aria-hidden="true">|</span>
+        <span class="arc-dot arc-dot--night" data-pos="6" title="Evening">○</span>
+        <span class="arc-dot arc-dot--night" data-pos="7" title="Midnight">○</span>
+      </div>
+    </div>
+
+    <div class="banner-right">
+      <span id="survivor-display" aria-label="Survivor name">SURVIVOR</span>
+      <span id="biome-display"    aria-label="Current biome">UNKNOWN</span>
+    </div>
+
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════
+       2. STAT BARS ROW
+       ═══════════════════════════════════════════════════════ -->
+  <section class="stats-row" aria-label="Survival stats">
+
+    <div class="stats-bars">
+
+      <!-- Health -->
+      <div class="stat-item" id="stat-health">
+        <div class="stat-item__header">
+          <span class="stat-item__icon" aria-hidden="true">❤️</span>
+          <span class="stat-item__label">HEALTH</span>
+          <span class="stat-item__value" id="stat-health-value">80/100</span>
+        </div>
+        <div class="stat-bar"
+             role="progressbar"
+             aria-label="Health"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="80">
+          <div class="stat-bar__fill stat-bar__fill--health" style="width:80%"></div>
+        </div>
+      </div>
+
+      <!-- Hunger -->
+      <div class="stat-item" id="stat-hunger">
+        <div class="stat-item__header">
+          <span class="stat-item__icon" aria-hidden="true">🍖</span>
+          <span class="stat-item__label">HUNGER</span>
+          <span class="stat-item__value" id="stat-hunger-value">70/100</span>
+        </div>
+        <div class="stat-bar"
+             role="progressbar"
+             aria-label="Hunger"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="70">
+          <div class="stat-bar__fill stat-bar__fill--hunger" style="width:70%"></div>
+        </div>
+      </div>
+
+      <!-- Thirst -->
+      <div class="stat-item" id="stat-thirst">
+        <div class="stat-item__header">
+          <span class="stat-item__icon" aria-hidden="true">💧</span>
+          <span class="stat-item__label">THIRST</span>
+          <span class="stat-item__value" id="stat-thirst-value">65/100</span>
+        </div>
+        <div class="stat-bar"
+             role="progressbar"
+             aria-label="Thirst"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="65">
+          <div class="stat-bar__fill stat-bar__fill--thirst" style="width:65%"></div>
+        </div>
+      </div>
+
+      <!-- Energy -->
+      <div class="stat-item" id="stat-energy">
+        <div class="stat-item__header">
+          <span class="stat-item__icon" aria-hidden="true">⚡</span>
+          <span class="stat-item__label">ENERGY</span>
+          <span class="stat-item__value" id="stat-energy-value">90/100</span>
+        </div>
+        <div class="stat-bar"
+             role="progressbar"
+             aria-label="Energy"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="90">
+          <div class="stat-bar__fill stat-bar__fill--energy" style="width:90%"></div>
+        </div>
+      </div>
+
+      <!-- Warmth -->
+      <div class="stat-item" id="stat-warmth">
+        <div class="stat-item__header">
+          <span class="stat-item__icon" aria-hidden="true">🔥</span>
+          <span class="stat-item__label">WARMTH</span>
+          <span class="stat-item__value" id="stat-warmth-value">75/100</span>
+        </div>
+        <div class="stat-bar"
+             role="progressbar"
+             aria-label="Warmth"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="75">
+          <div class="stat-bar__fill stat-bar__fill--warmth" style="width:75%"></div>
+        </div>
+      </div>
+
+    </div><!-- /.stats-bars -->
+
+    <div class="ap-row">
+      <span id="ap-counter" aria-label="Action points remaining">[ AP: 3 / 3 ]</span>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       3. MAIN GAME AREA
+       ═══════════════════════════════════════════════════════ -->
+  <div class="game-main">
+
+    <!-- ── LEFT: ACTIONS ─────────────────────────────────── -->
+    <section class="actions-panel" id="action-buttons" aria-labelledby="actions-heading">
+      <h2 class="panel-header" id="actions-heading">ACTIONS</h2>
+
+      <div class="actions-grid" role="group" aria-label="Available actions">
+
+        <!-- Gather Wood -->
+        <button class="action-btn" id="btn-gather-wood" aria-label="Gather Wood — costs 1 AP">
+          <span class="action-btn__icon" aria-hidden="true">🪵</span>
+          <span class="action-btn__label">Gather Wood</span>
+          <span class="action-btn__ap">1 AP</span>
+        </button>
+
+        <!-- Forage -->
+        <button class="action-btn" id="btn-forage" aria-label="Forage — costs 1 AP">
+          <span class="action-btn__icon" aria-hidden="true">🍄</span>
+          <span class="action-btn__label">Forage</span>
+          <span class="action-btn__ap">1 AP</span>
+        </button>
+
+        <!-- Fish — disabled (needs fishing rod) -->
+        <button class="action-btn"
+                id="btn-fish"
+                disabled
+                aria-disabled="true"
+                aria-label="Fish — disabled, requires fishing rod"
+                data-tooltip="Requires Fishing Rod">
+          <span class="action-btn__icon" aria-hidden="true">🎣</span>
+          <span class="action-btn__label">Fish</span>
+          <span class="action-btn__ap">2 AP</span>
+        </button>
+
+        <!-- Fetch Water -->
+        <button class="action-btn" id="btn-fetch-water" aria-label="Fetch Water — costs 1 AP">
+          <span class="action-btn__icon" aria-hidden="true">💧</span>
+          <span class="action-btn__label">Fetch Water</span>
+          <span class="action-btn__ap">1 AP</span>
+        </button>
+
+        <!-- Repair Shelter -->
+        <button class="action-btn" id="btn-repair-shelter" aria-label="Repair Shelter — costs 2 AP">
+          <span class="action-btn__icon" aria-hidden="true">🏕️</span>
+          <span class="action-btn__label">Repair Shelter</span>
+          <span class="action-btn__ap">2 AP</span>
+        </button>
+
+        <!-- Explore -->
+        <button class="action-btn" id="btn-explore" aria-label="Explore — costs 2 AP">
+          <span class="action-btn__icon" aria-hidden="true">🔍</span>
+          <span class="action-btn__label">Explore</span>
+          <span class="action-btn__ap">2 AP</span>
+        </button>
+
+        <!-- Rest -->
+        <button class="action-btn" id="btn-rest" aria-label="Rest — costs 1 AP">
+          <span class="action-btn__icon" aria-hidden="true">💤</span>
+          <span class="action-btn__label">Rest</span>
+          <span class="action-btn__ap">1 AP</span>
+        </button>
+
+        <!-- Tend Fire — disabled during day -->
+        <button class="action-btn"
+                id="btn-tend-fire"
+                disabled
+                aria-disabled="true"
+                aria-label="Tend Fire — night only"
+                data-tooltip="Night phase only">
+          <span class="action-btn__icon" aria-hidden="true">🔥</span>
+          <span class="action-btn__label">Tend Fire</span>
+          <span class="action-btn__ap">1 AP</span>
+        </button>
+
+        <!-- Eat -->
+        <button class="action-btn" id="btn-eat" aria-label="Eat — free action">
+          <span class="action-btn__icon" aria-hidden="true">🍖</span>
+          <span class="action-btn__label">Eat</span>
+          <span class="action-btn__ap">0 AP</span>
+        </button>
+
+        <!-- Drink -->
+        <button class="action-btn" id="btn-drink" aria-label="Drink — free action">
+          <span class="action-btn__icon" aria-hidden="true">💧</span>
+          <span class="action-btn__label">Drink</span>
+          <span class="action-btn__ap">0 AP</span>
+        </button>
+
+        <!-- Craft — opens modal -->
+        <button class="action-btn"
+                id="craft-open-btn"
+                aria-label="Open crafting bench"
+                aria-haspopup="dialog">
+          <span class="action-btn__icon" aria-hidden="true">🔨</span>
+          <span class="action-btn__label">Craft</span>
+          <span class="action-btn__ap">0 AP</span>
+        </button>
+
+      </div><!-- /.actions-grid -->
+    </section>
+
+    <!-- ── RIGHT: INVENTORY ───────────────────────────────── -->
+    <section class="inventory-panel" id="inventory-panel" aria-labelledby="inventory-heading">
+      <h2 class="panel-header" id="inventory-heading">INVENTORY</h2>
+
+      <!-- Tabs -->
+      <div class="inv-tabs" role="tablist" aria-label="Inventory categories">
+        <button class="inv-tab active"
+                role="tab"
+                id="tab-materials"
+                aria-selected="true"
+                aria-controls="inv-materials"
+                data-tab="inv-materials">MATERIALS</button>
+        <button class="inv-tab"
+                role="tab"
+                id="tab-food"
+                aria-selected="false"
+                aria-controls="inv-food"
+                data-tab="inv-food">FOOD</button>
+        <button class="inv-tab"
+                role="tab"
+                id="tab-crafted"
+                aria-selected="false"
+                aria-controls="inv-crafted"
+                data-tab="inv-crafted">CRAFTED</button>
+      </div>
+
+      <!-- Materials -->
+      <div id="inv-materials" class="inv-pane active" role="tabpanel" aria-labelledby="tab-materials">
+        <div class="inv-item" data-item="wood">
+          <span class="inv-item__icon" aria-hidden="true">🪵</span>
+          <span class="inv-item__name">Wood</span>
+          <span class="inv-item__count" id="inv-wood">x0</span>
+        </div>
+        <div class="inv-item" data-item="rope">
+          <span class="inv-item__icon" aria-hidden="true">🪢</span>
+          <span class="inv-item__name">Rope</span>
+          <span class="inv-item__count" id="inv-rope">x0</span>
+        </div>
+        <div class="inv-item" data-item="cloth">
+          <span class="inv-item__icon" aria-hidden="true">🧵</span>
+          <span class="inv-item__name">Cloth</span>
+          <span class="inv-item__count" id="inv-cloth">x0</span>
+        </div>
+        <div class="inv-item" data-item="vine">
+          <span class="inv-item__icon" aria-hidden="true">🌿</span>
+          <span class="inv-item__name">Vine</span>
+          <span class="inv-item__count" id="inv-vine">x0</span>
+        </div>
+        <div class="inv-item" data-item="stone">
+          <span class="inv-item__icon" aria-hidden="true">🪨</span>
+          <span class="inv-item__name">Stone</span>
+          <span class="inv-item__count" id="inv-stone">x0</span>
+        </div>
+        <div class="inv-item" data-item="stick">
+          <span class="inv-item__icon" aria-hidden="true">🌾</span>
+          <span class="inv-item__name">Stick</span>
+          <span class="inv-item__count" id="inv-stick">x0</span>
+        </div>
+      </div>
+
+      <!-- Food -->
+      <div id="inv-food" class="inv-pane" role="tabpanel" aria-labelledby="tab-food">
+        <div class="inv-item" data-item="raw-fish">
+          <span class="inv-item__icon" aria-hidden="true">🐟</span>
+          <span class="inv-item__name">Raw Fish</span>
+          <span class="inv-item__count" id="inv-raw-fish">x0</span>
+        </div>
+        <div class="inv-item" data-item="cooked-fish">
+          <span class="inv-item__icon" aria-hidden="true">🍣</span>
+          <span class="inv-item__name">Cooked Fish</span>
+          <span class="inv-item__count" id="inv-cooked-fish">x0</span>
+        </div>
+        <div class="inv-item" data-item="berries">
+          <span class="inv-item__icon" aria-hidden="true">🫐</span>
+          <span class="inv-item__name">Berries</span>
+          <span class="inv-item__count" id="inv-berries">x0</span>
+        </div>
+        <div class="inv-item" data-item="mushroom">
+          <span class="inv-item__icon" aria-hidden="true">🍄</span>
+          <span class="inv-item__name">Mushroom</span>
+          <span class="inv-item__count" id="inv-mushroom">x0</span>
+        </div>
+      </div>
+
+      <!-- Crafted -->
+      <div id="inv-crafted" class="inv-pane" role="tabpanel" aria-labelledby="tab-crafted">
+        <div class="inv-item" data-item="fishing-rod">
+          <span class="inv-item__icon" aria-hidden="true">🎣</span>
+          <span class="inv-item__name">Fishing Rod</span>
+          <span class="inv-item__count" id="inv-fishing-rod">x0</span>
+        </div>
+        <div class="inv-item" data-item="bandage">
+          <span class="inv-item__icon" aria-hidden="true">🩹</span>
+          <span class="inv-item__name">Bandage</span>
+          <span class="inv-item__count" id="inv-bandage">x0</span>
+        </div>
+        <div class="inv-item" data-item="purified-water">
+          <span class="inv-item__icon" aria-hidden="true">🫙</span>
+          <span class="inv-item__name">Purified Water</span>
+          <span class="inv-item__count" id="inv-purified-water">x0</span>
+        </div>
+      </div>
+
+    </section>
+  </div><!-- /.game-main -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       4. EVENT LOG
+       ═══════════════════════════════════════════════════════ -->
+  <section class="event-log-section" aria-labelledby="log-heading">
+    <h2 class="event-log-header" id="log-heading">EVENT LOG</h2>
+    <div id="event-log" role="log" aria-live="polite" aria-atomic="false">
+      <span class="log-entry log-warning">&gt; The air is cold. Your fire needs tending.</span>
+      <span class="log-entry log-info">&gt; DAY 1 — MORNING. You wake up in the wilderness. Time to survive.</span>
+    </div>
+  </section>
+
+</div><!-- /.game-shell -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     CRAFT MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="craft-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="craft-modal-title">
+
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="craft-modal-title">CRAFTING BENCH</span>
+      <button class="modal-close" id="craft-close-btn" aria-label="Close crafting bench">
+        X CLOSE
+      </button>
+    </div>
+
+    <div class="recipe-grid">
+
+      <!-- Purified Water -->
+      <div class="recipe-card recipe-card--unavailable">
+        <p class="recipe-card__result">💧 PURIFIED WATER</p>
+        <p class="recipe-card__ingredients">
+          Raw Water x1 + Wood x1<br />
+          <span class="recipe-card__arrow">→</span>
+          <span class="recipe-card__output">Purified Water x2</span>
+        </p>
+        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      </div>
+
+      <!-- Bandage -->
+      <div class="recipe-card recipe-card--unavailable">
+        <p class="recipe-card__result">🩹 BANDAGE</p>
+        <p class="recipe-card__ingredients">
+          Cloth x1 + Stick x1<br />
+          <span class="recipe-card__arrow">→</span>
+          <span class="recipe-card__output">Bandage x1</span>
+        </p>
+        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      </div>
+
+      <!-- Fishing Rod -->
+      <div class="recipe-card recipe-card--unavailable">
+        <p class="recipe-card__result">🎣 FISHING ROD</p>
+        <p class="recipe-card__ingredients">
+          Stick x2 + Vine x1<br />
+          <span class="recipe-card__arrow">→</span>
+          <span class="recipe-card__output">Fishing Rod x1</span>
+        </p>
+        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      </div>
+
+      <!-- Improved Shelter -->
+      <div class="recipe-card recipe-card--unavailable">
+        <p class="recipe-card__result">🏕️ IMPROVED SHELTER</p>
+        <p class="recipe-card__ingredients">
+          Wood x5 + Rope x2<br />
+          <span class="recipe-card__arrow">→</span>
+          <span class="recipe-card__output">Improved Shelter</span>
+        </p>
+        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      </div>
+
+      <!-- Signal Fire — WIN CONDITION, full width -->
+      <div class="recipe-card recipe-card--signal-fire recipe-card--unavailable"
+           style="grid-column: 1 / -1;">
+        <p class="recipe-card__result">🔥 SIGNAL FIRE — WIN CONDITION</p>
+        <p class="recipe-card__ingredients">
+          Wood x8 + Cloth x3 + Stone x2<br />
+          <span class="recipe-card__arrow">→</span>
+          <span class="recipe-card__output" style="color:var(--pixel-yellow)">
+            🔥 Signal Fire — triggers rescue
+          </span>
+        </p>
+        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT &amp; LIGHT</button>
+      </div>
+
+    </div><!-- /.recipe-grid -->
+  </div><!-- /.modal-box -->
+
+</div><!-- /#craft-modal -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     DEATH SCREEN
+     ═══════════════════════════════════════════════════════════ -->
+<div id="death-screen" role="alertdialog" aria-modal="true" aria-labelledby="death-title">
+
+  <pre class="tombstone-art" aria-hidden="true">
+      _________
+     |         |
+     |  R.I.P. |
+     |         |
+     |  * * *  |
+     |_________|
+        |   |
+      __|___|__
+     /         \</pre>
+
+  <h1 class="death-title" id="death-title">YOU DIDN'T MAKE IT.</h1>
+
+  <p class="death-stat">
+    SURVIVOR: <span id="death-name">UNKNOWN</span>
+  </p>
+  <p class="death-stat">
+    DAYS SURVIVED: <span id="death-days">0</span>
+  </p>
+  <p class="death-stat">
+    CAUSE OF DEATH: <span id="death-cause">THE WILDERNESS</span>
+  </p>
+
+  <p class="death-quip" id="death-quip">"Some people don't come back."</p>
+
+  <div class="overlay-buttons">
+    <button class="btn-primary"
+            onclick="window.location.href='setup.html'"
+            aria-label="Play again">
+      PLAY AGAIN
+    </button>
+    <button class="btn-danger"
+            onclick="window.location.href='index.html'"
+            aria-label="Return to main menu">
+      MAIN MENU
+    </button>
+  </div>
+
+</div><!-- /#death-screen -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     WIN SCREEN
+     ═══════════════════════════════════════════════════════════ -->
+<div id="win-screen" role="alertdialog" aria-modal="true" aria-labelledby="win-title">
+
+  <div class="win-helicopter" aria-hidden="true">🚁</div>
+
+  <h1 class="win-title" id="win-title">RESCUED!</h1>
+
+  <p class="win-stat">SURVIVOR: <span id="win-name">UNKNOWN</span></p>
+  <p class="win-stat">DAYS SURVIVED: <span id="win-days">0</span></p>
+  <p class="win-stat">BIOME: <span id="win-biome">THE WILDERNESS</span></p>
+
+  <!-- Achievement slots — populated by JS -->
+  <div class="achievement-grid" id="achievement-grid" aria-label="Achievements earned">
+    <div class="achievement-slot" aria-hidden="true"></div>
+    <div class="achievement-slot" aria-hidden="true"></div>
+    <div class="achievement-slot" aria-hidden="true"></div>
+    <div class="achievement-slot" aria-hidden="true"></div>
+    <div class="achievement-slot" aria-hidden="true"></div>
+    <div class="achievement-slot" aria-hidden="true"></div>
+  </div>
+
+  <div class="overlay-buttons">
+    <button class="btn-primary"
+            onclick="window.location.href='setup.html'"
+            aria-label="Play again">
+      PLAY AGAIN
+    </button>
+    <button class="btn-danger"
+            onclick="window.location.href='index.html'"
+            aria-label="Return to main menu">
+      MAIN MENU
+    </button>
+  </div>
+
+</div><!-- /#win-screen -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     ACHIEVEMENT TOAST
+     ═══════════════════════════════════════════════════════════ -->
+<div id="achievement-toast" role="status" aria-live="polite">
+  <span class="toast-medal" aria-hidden="true">🏅</span>
+  <div class="toast-content">
+    <p class="toast-title" id="toast-title">ACHIEVEMENT UNLOCKED</p>
+    <p class="toast-desc"  id="toast-desc">First Night — You survived your first night.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     UI BOOTSTRAP — localStorage read, tab switching, modal
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+  /* ── Read survivor data from localStorage ─────────────── */
+  (function () {
+    const name  = localStorage.getItem('survivorName') || 'SURVIVOR';
+    const biome = localStorage.getItem('biome')        || 'UNKNOWN';
+
+    document.getElementById('survivor-display').textContent = name.toUpperCase();
+    document.getElementById('biome-display').textContent    = biome.toUpperCase();
+
+    /* Pre-populate death/win screens with survivor name */
+    document.getElementById('death-name').textContent = name.toUpperCase();
+    document.getElementById('win-name').textContent   = name.toUpperCase();
+    document.getElementById('win-biome').textContent  = biome.toUpperCase();
+  })();
+
+  /* ── Inventory tab switching ───────────────────────────── */
+  document.querySelectorAll('.inv-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.inv-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.inv-pane').forEach(p => {
+        p.classList.remove('active');
+      });
+
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ── Craft modal open / close ──────────────────────────── */
+  const craftModal    = document.getElementById('craft-modal');
+  const craftOpenBtn  = document.getElementById('craft-open-btn');
+  const craftCloseBtn = document.getElementById('craft-close-btn');
+
+  function openCraftModal() {
+    craftModal.style.display = 'flex';
+    craftCloseBtn.focus();
+  }
+
+  function closeCraftModal() {
+    craftModal.style.display = 'none';
+    craftOpenBtn.focus();
+  }
+
+  craftOpenBtn.addEventListener('click', openCraftModal);
+  craftCloseBtn.addEventListener('click', closeCraftModal);
+
+  /* Close on backdrop click */
+  craftModal.addEventListener('click', e => {
+    if (e.target === craftModal) closeCraftModal();
+  });
+
+  /* Close on Escape */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && craftModal.style.display === 'flex') {
+      closeCraftModal();
+    }
+  });
+</script>
+
+<script src="script.js"></script>
 </body>
 </html>
