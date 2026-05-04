@@ -13,6 +13,93 @@ const PHASE_CLASSES = { morning: 'phase-morning', afternoon: 'phase-afternoon', 
 // Phase arc dot position per phase (matches data-pos on .arc-dot elements)
 const ARC_POS = { morning: 1, afternoon: 3, night: 6 };
 
+const BIOME_INTROS = {
+  flatwoods: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'EASY',     color: '#4ade80' },
+      { label: 'WARMTH DRAIN',  value: 'NORMAL',   color: '#4ade80' },
+      { label: 'THIRST DRAIN',  value: 'NORMAL',   color: '#4ade80' },
+      { label: 'FORAGING',      value: '+10%',     color: '#4ade80' },
+      { label: 'WARNING',       value: 'NONE',     color: '#4ade80' },
+    ],
+    flavor: [
+      "Familiar terrain. Flat. Dense oak and maple.",
+      "You've camped before. This should be fine.",
+      "Famous last words.",
+    ],
+  },
+  mountain: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'MEDIUM',   color: '#f97316' },
+      { label: 'WARMTH DRAIN',  value: '+25%',     color: '#f97316' },
+      { label: 'EXPLORE LOOT',  value: '+20%',     color: '#4ade80' },
+      { label: 'ALTITUDE',      value: 'BRUTAL',   color: '#f97316' },
+      { label: 'WARNING',       value: 'COLD KILLS', color: '#ef4444' },
+    ],
+    flavor: [
+      "Rocky slopes. Thin air. Pine canopy.",
+      "The views are beautiful.",
+      "Die anyway.",
+    ],
+  },
+  tundra: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'HARD',     color: '#ef4444' },
+      { label: 'WARMTH DRAIN',  value: '+50%',     color: '#ef4444' },
+      { label: 'ACTION POINTS', value: '-1 / PHASE', color: '#ef4444' },
+      { label: 'WATER SOURCE',  value: 'SNOW ONLY', color: '#f97316' },
+      { label: 'WARNING',       value: 'FIRE = LIFE', color: '#ef4444' },
+    ],
+    flavor: [
+      "Frozen wilderness. Sparse. Desolate.",
+      "The cold doesn't hate you.",
+      "It just doesn't care.",
+    ],
+  },
+  rainforest: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'MEDIUM',   color: '#f97316' },
+      { label: 'FIRE RISK',     value: '-20% LIGHT', color: '#f97316' },
+      { label: 'FISHING',       value: '+30%',     color: '#4ade80' },
+      { label: 'RAINFALL',      value: 'CONSTANT', color: '#f97316' },
+      { label: 'WARNING',       value: 'KEEP FIRE LIT', color: '#ef4444' },
+    ],
+    flavor: [
+      "Mist and rain. Always rain.",
+      "The forest is alive and watching.",
+      "It has been watching for a long time.",
+    ],
+  },
+  desert: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'HARD',     color: '#ef4444' },
+      { label: 'THIRST DRAIN',  value: '+50%',     color: '#ef4444' },
+      { label: 'TEMPERATURE',   value: 'EXTREME',  color: '#ef4444' },
+      { label: 'WATER SOURCE',  value: 'SCARCE',   color: '#ef4444' },
+      { label: 'WARNING',       value: 'DRINK FIRST', color: '#ef4444' },
+    ],
+    flavor: [
+      "Scorching days. Freezing nights.",
+      "Thirst will take you before anything else.",
+      "It always does.",
+    ],
+  },
+  swamp: {
+    stats: [
+      { label: 'DIFFICULTY',    value: 'MED-HARD', color: '#f97316' },
+      { label: 'WATER',         value: 'ALWAYS DIRTY', color: '#f97316' },
+      { label: 'HEALTH RISK',   value: 'PASSIVE',  color: '#f97316' },
+      { label: 'FISHING',       value: 'NORMAL',   color: '#4ade80' },
+      { label: 'WARNING',       value: 'PURIFY EVERYTHING', color: '#ef4444' },
+    ],
+    flavor: [
+      "Humid. Murky. Loud at night.",
+      "Everything here is trying to make you sick.",
+      "Some of it is succeeding.",
+    ],
+  },
+};
+
 const BIOME_NAMES = {
   flatwoods:  'Midwest Flatwoods',
   mountain:   'Mountain Forest',
@@ -1829,7 +1916,76 @@ function init() {
   // Initial render
   renderAll();
 
+  showBiomeIntro();
+
   console.log('[Gone Campin\'] Init — player:', survivorName, '| biome:', biome, '| mods:', biomeModifiers);
+}
+
+function showBiomeIntro() {
+  const overlay   = document.getElementById('intro-overlay');
+  const intro     = BIOME_INTROS[biome] || BIOME_INTROS.flatwoods;
+  const biomeName = BIOME_NAMES[biome] || biome;
+
+  document.getElementById('intro-survivor').textContent =
+    `[ ${survivorName.toUpperCase()} — ${biomeName.toUpperCase()} ]`;
+  document.getElementById('intro-biome-name').textContent =
+    biomeName.toUpperCase();
+
+  const statsEl = document.getElementById('intro-stats');
+  statsEl.innerHTML = '';
+  intro.stats.forEach(stat => {
+    const row = document.createElement('div');
+    row.style.cssText = [
+      'display:flex', 'justify-content:space-between', 'align-items:center',
+      "font-family:'Press Start 2P',monospace", 'font-size:0.38rem',
+      'letter-spacing:0.05em', 'line-height:1.8', 'padding:0.3rem 0.5rem',
+      `border-left:3px solid ${stat.color}`, 'background:rgba(255,255,255,0.03)',
+      'opacity:0', 'transition:opacity 0.6s ease',
+    ].join(';');
+    row.innerHTML = `
+      <span style="color:#94a3b8">${stat.label}</span>
+      <span style="color:${stat.color}">${stat.value}</span>
+    `;
+    statsEl.appendChild(row);
+  });
+
+  const flavorEl = document.getElementById('intro-flavor');
+  flavorEl.innerHTML = '';
+  intro.flavor.forEach(line => {
+    const p = document.createElement('p');
+    p.style.cssText = [
+      "font-family:'VT323',monospace", 'font-size:1.35rem',
+      'color:#e2e8f0', 'line-height:1.5', 'letter-spacing:0.03em',
+      'opacity:0', 'transition:opacity 0.7s ease', 'margin:0',
+    ].join(';');
+    p.textContent = line;
+    flavorEl.appendChild(p);
+  });
+
+  setTimeout(() => { document.getElementById('intro-survivor').style.opacity = '1'; }, 300);
+  setTimeout(() => { document.getElementById('intro-biome-name').style.opacity = '1'; }, 600);
+
+  statsEl.querySelectorAll('div').forEach((row, i) => {
+    setTimeout(() => { row.style.opacity = '1'; }, 900 + i * 200);
+  });
+
+  const afterStats = 900 + intro.stats.length * 200;
+
+  setTimeout(() => { document.getElementById('intro-divider').style.opacity = '1'; }, afterStats + 100);
+
+  flavorEl.querySelectorAll('p').forEach((line, i) => {
+    setTimeout(() => { line.style.opacity = '1'; }, afterStats + 400 + i * 350);
+  });
+
+  setTimeout(() => {
+    document.getElementById('intro-progress-bar').style.width = '100%';
+  }, 100);
+
+  setTimeout(() => {
+    overlay.style.transition = 'opacity 0.8s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => { overlay.style.display = 'none'; }, 800);
+  }, 5000);
 }
 
 // Boot once DOM is ready
