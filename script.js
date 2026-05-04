@@ -244,9 +244,10 @@ function renderInventory() {
     'inv-cooked-fish':    inv.cookedFish,
     'inv-berries':        inv.berries,
     'inv-mushroom':       inv.mushroom + inv.badMushroom, // bad mushrooms look identical
-    'inv-fishing-rod':    inv.fishingRod ? 1 : 0,
-    'inv-bandage':        inv.bandage,
-    'inv-purified-water': inv.purifiedWater,
+    'inv-fishing-rod':       inv.fishingRod ? 1 : 0,
+    'inv-improved-shelter':  inv.improvedShelter ? 1 : 0,
+    'inv-bandage':           inv.bandage,
+    'inv-purified-water':    inv.purifiedWater,
   };
 
   Object.entries(map).forEach(([id, count]) => {
@@ -1042,13 +1043,7 @@ const BIOME_EVENTS = {
 function triggerRandomEvent() {
   const pool  = [...EVENT_POOL, ...(BIOME_EVENTS[biome] || [])];
   const event = pool[randInt(0, pool.length - 1)];
-
-  if (Array.isArray(event.choices) && event.choices.length > 0) {
-    showEventOverlay(event);
-  } else {
-    event.resolve();
-    renderAll();
-  }
+  showEventOverlay(event);
 }
 
 function showEventOverlay(event) {
@@ -1058,31 +1053,49 @@ function showEventOverlay(event) {
   const choicesEl = document.getElementById('event-choices');
   choicesEl.innerHTML = '';
 
-  event.choices.forEach(choice => {
-    const btn = document.createElement('button');
-    btn.textContent = choice.label;
-    Object.assign(btn.style, {
-      fontFamily:    "'Press Start 2P', monospace",
-      fontSize:      '0.42rem',
-      background:    '#4ade80',
-      color:         '#000',
-      border:        '2px solid #000',
-      padding:       '0.75rem 1.25rem',
-      cursor:        'pointer',
-      boxShadow:     '3px 3px 0 #000',
-      borderRadius:  '0',
-      letterSpacing: '0.05em',
-      lineHeight:    '1.8',
+  const btnStyle = {
+    fontFamily:    "'Press Start 2P', monospace",
+    fontSize:      '0.42rem',
+    background:    '#4ade80',
+    color:         '#000',
+    border:        '2px solid #000',
+    padding:       '0.75rem 1.25rem',
+    cursor:        'pointer',
+    boxShadow:     '3px 3px 0 #000',
+    borderRadius:  '0',
+    letterSpacing: '0.05em',
+    lineHeight:    '1.8',
+  };
+
+  const choices = Array.isArray(event.choices) ? event.choices : [];
+
+  if (choices.length > 0) {
+    choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.textContent = choice.label;
+      Object.assign(btn.style, btnStyle);
+      btn.addEventListener('mouseenter', () => { btn.style.background = '#f97316'; });
+      btn.addEventListener('mouseleave', () => { btn.style.background = '#4ade80'; });
+      btn.addEventListener('click', () => {
+        choice.resolve();
+        hideEventOverlay();
+        renderAll();
+      });
+      choicesEl.appendChild(btn);
     });
+  } else {
+    const btn = document.createElement('button');
+    btn.textContent = '[ CONTINUE ]';
+    Object.assign(btn.style, btnStyle);
     btn.addEventListener('mouseenter', () => { btn.style.background = '#f97316'; });
     btn.addEventListener('mouseleave', () => { btn.style.background = '#4ade80'; });
     btn.addEventListener('click', () => {
-      choice.resolve();
+      event.resolve();
       hideEventOverlay();
       renderAll();
     });
     choicesEl.appendChild(btn);
-  });
+  }
 
   document.getElementById('event-overlay').style.display = 'flex';
 }
@@ -1256,6 +1269,15 @@ function injectVignette() {
       from { box-shadow: inset 0 0 80px 20px rgba(239,68,68,0.2); }
       to   { box-shadow: inset 0 0 80px 20px rgba(239,68,68,0.55); }
     }
+    @keyframes flicker {
+      0%   { transform: scaleY(1)    translateY(0);   opacity: 1; }
+      50%  { transform: scaleY(0.92) translateY(2px); opacity: 0.85; }
+      100% { transform: scaleY(1)    translateY(0);   opacity: 1; }
+    }
+    @keyframes smoke-rise {
+      0%   { transform: translateY(0)     translateX(0);   opacity: 0.6; }
+      100% { transform: translateY(-40px) translateX(8px); opacity: 0; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -1423,8 +1445,36 @@ function wireButtons() {
     document.getElementById(id)?.addEventListener('click', fn);
   });
 
-  // Craft open button also refreshes recipe availability
-  document.getElementById('craft-open-btn')?.addEventListener('click', renderCraftModal);
+  // Inventory tab switching (also wired in inline bootstrap; kept here for safety)
+  document.querySelectorAll('.inv-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.inv-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.inv-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      const pane = document.getElementById(tab.dataset.tab);
+      if (pane) pane.classList.add('active');
+    });
+  });
+
+  // Craft modal open / close
+  document.getElementById('craft-open-btn')?.addEventListener('click', () => {
+    document.getElementById('craft-modal').style.display = 'flex';
+    renderCraftModal();
+  });
+
+  document.getElementById('craft-close-btn')?.addEventListener('click', () => {
+    document.getElementById('craft-modal').style.display = 'none';
+  });
+
+  document.getElementById('craft-modal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('craft-modal')) {
+      document.getElementById('craft-modal').style.display = 'none';
+    }
+  });
 
   // Wire each recipe's CRAFT button by position
   document.querySelectorAll('.recipe-craft-btn').forEach((btn, i) => {
