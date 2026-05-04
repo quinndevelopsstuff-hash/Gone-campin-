@@ -34,7 +34,7 @@ const ACHIEVEMENTS = {
   first_night: { name: 'First Night',           desc: 'Survived your first night.' },
   fire_keeper: { name: 'Fire Keeper',            desc: 'Kept the fire alive for 3 nights.' },
   gone_fishin: { name: "Gone Fishin'",           desc: 'Caught 5 fish.' },
-  macgyver:    { name: 'MacGyver',               desc: 'Crafted every recipe.' },
+  macgyver:    { name: 'MacGyver',               desc: 'Crafted one item from each category.' },
   day_one:     { name: 'That Escalated Quickly', desc: 'Died on Day 1.' },
   well_fed:    { name: 'Well Fed',               desc: 'Kept hunger above 80 for 3 days.' },
   hydrated:    { name: 'Hydration Station',      desc: 'Drank purified water 10 times.' },
@@ -46,23 +46,151 @@ const ACHIEVEMENTS = {
 
 // Recipe definitions: needs (ingredients) → gives (results)
 const RECIPES = {
-  purifiedWater: { needs: { rawWater: 1, wood: 1 },              gives: { purifiedWater: 2 } },
-  bandage:       { needs: { cloth: 1, stick: 1 },                gives: { bandage: 1 } },
-  fishingRod:    { needs: { stick: 2, vine: 1 },                 gives: { fishingRod: true } },
-  shelter:       { needs: { wood: 5, rope: 2 },                  gives: { improvedShelter: true } },
-  signalFire:    { needs: { wood: 8, cloth: 3, stone: 2 },       gives: { signalFire: true } },
+  // ── Food & Cooking ────────────────────────────────────────
+  cookFish: {
+    needs: { rawFish: 1, wood: 1 },
+    gives: { cookedFish: 1 },
+    category: 'food',
+    label: '🍳 Cooked Fish ×1',
+    desc: 'Cook raw fish over a fire. Safe and filling.',
+  },
+  purifiedWater: {
+    needs: { rawWater: 1, wood: 1 },
+    gives: { purifiedWater: 2 },
+    category: 'food',
+    label: '💧 Purified Water ×2',
+    desc: 'Boil raw water to make it safe to drink.',
+  },
+  herbalTea: {
+    needs: { berries: 2, rawWater: 1, wood: 1 },
+    gives: { herbalTea: 1 },
+    category: 'food',
+    label: '🍵 Herbal Tea ×1',
+    desc: 'Warm and restorative. Restores thirst and health.',
+  },
+  jerky: {
+    needs: { cookedFish: 2, cloth: 1 },
+    gives: { jerky: 3 },
+    category: 'food',
+    label: '🥩 Jerky ×3',
+    desc: 'Dried preserved meat. Lasts forever.',
+  },
+  // ── Survival Gear ─────────────────────────────────────────
+  shelter: {
+    needs: { wood: 5, rope: 2 },
+    gives: { improvedShelter: true },
+    category: 'gear',
+    label: '🏕️ Improved Shelter',
+    desc: 'Reduces night warmth drain by 50%.',
+  },
+  snare: {
+    needs: { rope: 1, stick: 2 },
+    gives: { snare: true },
+    category: 'gear',
+    label: '🪤 Rope Snare',
+    desc: 'Set a trap. Each morning: random food catch (rarer is more).',
+  },
+  torch: {
+    needs: { stick: 1, cloth: 1, wood: 1 },
+    gives: { torch: 2 },
+    category: 'gear',
+    label: '🔦 Torch ×2',
+    desc: '+15 Warmth at night when out of wood. One use each.',
+  },
+  canteen: {
+    needs: { cloth: 2, vine: 1 },
+    gives: { canteen: true },
+    category: 'gear',
+    label: '🫙 Water Canteen',
+    desc: 'Fetch Water gives +1 extra. Auto-purifies 1 raw water each morning.',
+  },
+  sled: {
+    needs: { wood: 4, rope: 2 },
+    gives: { sled: true },
+    category: 'gear',
+    label: '🛷 Sled',
+    desc: 'Gather Wood gives +2 extra per action.',
+  },
+  // ── Medicine ──────────────────────────────────────────────
+  bandage: {
+    needs: { cloth: 1, stick: 1 },
+    gives: { bandage: 1 },
+    category: 'medicine',
+    label: '🩹 Bandage ×1',
+    desc: 'Apply via Eat action to restore +25 Health.',
+  },
+  poultice: {
+    needs: { berries: 1, cloth: 1 },
+    gives: { poultice: 1 },
+    category: 'medicine',
+    label: '🌿 Herbal Poultice ×1',
+    desc: '+15 Health. Cures sickness immediately.',
+  },
+  antidote: {
+    needs: { mushroom: 2, rawWater: 1 },
+    gives: { antidote: 1 },
+    category: 'medicine',
+    label: '⚗️ Antidote ×1',
+    desc: 'Fully cures sickness. +10 Health.',
+  },
+  splint: {
+    needs: { stick: 2, cloth: 2 },
+    gives: { splint: 1 },
+    category: 'medicine',
+    label: '🩼 Splint ×1',
+    desc: '+30 Health. Strong recovery item.',
+  },
+  // ── Tools ─────────────────────────────────────────────────
+  fishingRod: {
+    needs: { stick: 2, vine: 1 },
+    gives: { fishingRod: true },
+    category: 'tools',
+    label: '🎣 Fishing Rod',
+    desc: 'Unlocks the Fish action.',
+  },
+  proRod: {
+    needs: { fishingRod: true, vine: 2, stone: 1 },
+    gives: { proRod: true, fishingRod: false },
+    category: 'tools',
+    label: '🎣 Pro Fishing Rod',
+    desc: 'Upgraded rod. Fish gives +2 extra per action. Replaces basic rod.',
+  },
+  fireKit: {
+    needs: { stone: 2, cloth: 1 },
+    gives: { fireKit: true },
+    category: 'tools',
+    label: '🔥 Fire Starter Kit',
+    desc: 'Guarantees fire lights. Ignores rainforest fire penalty.',
+  },
+  axe: {
+    needs: { stone: 2, stick: 2, vine: 1 },
+    gives: { axe: true },
+    category: 'tools',
+    label: '🪓 Upgraded Axe',
+    desc: 'Gather Wood gives +3 extra wood per action.',
+  },
+  // ── Special ───────────────────────────────────────────────
+  signalFire: {
+    needs: { wood: 8, cloth: 3, stone: 2 },
+    gives: { signalFire: true },
+    category: 'special',
+    label: '🔥 Signal Fire',
+    desc: 'Build the Signal Fire. Triggers rescue. THIS IS HOW YOU WIN.',
+  },
 };
 
-// Must match DOM order of .recipe-craft-btn elements in game.html
-const RECIPE_ORDER = ['purifiedWater', 'bandage', 'fishingRod', 'shelter', 'signalFire'];
-
-const RECIPE_LABELS = {
-  purifiedWater: 'Purified Water ×2',
-  bandage:       'Bandage ×1',
-  fishingRod:    'Fishing Rod',
-  shelter:       'Improved Shelter',
-  signalFire:    'Signal Fire',
-};
+const RECIPE_ORDER = [
+  // 🍖 Food & Cooking
+  'cookFish', 'purifiedWater', 'herbalTea', 'jerky',
+  // 🛡️ Survival Gear
+  'shelter', 'snare', 'torch', 'canteen', 'sled',
+  // 💊 Medicine
+  'bandage', 'poultice', 'antidote', 'splint',
+  // 🔧 Tools
+  'fishingRod', 'proRod', 'fireKit', 'axe',
+  // 🏆 Special
+  'signalFire',
+];
 
 // ── MODULE VARS ──────────────────────────────────────────────────────────────
 
@@ -212,15 +340,16 @@ function renderActions() {
   setBtn('btn-repair-shelter', isNight || ap < 1);
   setBtn('btn-explore',        isNight || ap < 2);
 
-  // Fish: needs rod + daytime + 2 AP
-  const fishDisabled = !inventory.fishingRod || isNight || ap < 2;
+  // Fish: needs rod (basic or pro) + daytime + 2 AP
+  const hasRod     = inventory.fishingRod || inventory.proRod;
+  const fishDisabled = !hasRod || isNight || ap < 2;
   setBtn('btn-fish', fishDisabled,
-         !inventory.fishingRod ? 'Requires Fishing Rod' : 'Unavailable');
+         !hasRod ? 'Requires Fishing Rod' : 'Unavailable');
 
-  // Tend fire: night only, needs AP and wood
-  const noWoodForFire = inventory.wood < 1;
-  setBtn('btn-tend-fire', !isNight || ap < 1 || noWoodForFire,
-         !isNight ? 'Night phase only' : noWoodForFire ? 'Need wood ×1' : undefined);
+  // Tend fire: night only, needs AP and wood (or torch)
+  const noFuel = inventory.wood < 1 && inventory.torch < 1;
+  setBtn('btn-tend-fire', !isNight || ap < 1 || noFuel,
+         !isNight ? 'Night phase only' : noFuel ? 'Need wood ×1 or torch' : undefined);
 
   // Free (0 AP) actions
   const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom', 'bandage']
@@ -244,9 +373,21 @@ function renderInventory() {
     'inv-cooked-fish':    inv.cookedFish,
     'inv-berries':        inv.berries,
     'inv-mushroom':       inv.mushroom + inv.badMushroom, // bad mushrooms look identical
+    'inv-jerky':             inv.jerky,
+    'inv-herbal-tea':        inv.herbalTea,
     'inv-fishing-rod':       inv.fishingRod ? 1 : 0,
+    'inv-pro-rod':           inv.proRod ? 1 : 0,
     'inv-improved-shelter':  inv.improvedShelter ? 1 : 0,
+    'inv-snare':             inv.snare ? 1 : 0,
+    'inv-torch':             inv.torch,
+    'inv-canteen':           inv.canteen ? 1 : 0,
+    'inv-sled':              inv.sled ? 1 : 0,
+    'inv-axe':               inv.axe ? 1 : 0,
+    'inv-fire-kit':          inv.fireKit ? 1 : 0,
     'inv-bandage':           inv.bandage,
+    'inv-poultice':          inv.poultice,
+    'inv-antidote':          inv.antidote,
+    'inv-splint':            inv.splint,
     'inv-purified-water':    inv.purifiedWater,
   };
 
@@ -436,8 +577,11 @@ function updateCampfireSprite() {
 
 function gatherWood() {
   if (!spendAP(1)) return;
-  const amount = randInt(2, 4);
-  gameState.inventory.wood += amount;
+  const inv = gameState.inventory;
+  let amount = randInt(2, 4);
+  if (inv.axe)  amount += 3;
+  if (inv.sled) amount += 2;
+  inv.wood += amount;
   addLog(`> You gather ${amount} piece${amount > 1 ? 's' : ''} of wood.`, 'info');
   renderAll();
 }
@@ -466,11 +610,13 @@ function forage() {
 }
 
 function fish() {
-  if (!gameState.inventory.fishingRod) return;
+  const inv = gameState.inventory;
+  if (!inv.fishingRod && !inv.proRod) return;
   if (!spendAP(2)) return;
   const hasBonus = (biomeModifiers.fishingBonus || 0) > 0;
-  const amount   = randInt(2, 3) + (hasBonus ? 1 : 0);
-  gameState.inventory.rawFish += amount;
+  let amount = randInt(2, 3) + (hasBonus ? 1 : 0);
+  if (inv.proRod) amount += 2;
+  inv.rawFish += amount;
   gameState.counters.fishCaught += amount;
   addLog(`> You cast your line... ${amount} fish caught.`, 'info');
   if (gameState.counters.fishCaught >= 5) unlockAchievement('gone_fishin');
@@ -483,7 +629,8 @@ function fetchWater() {
     return;
   }
   if (!spendAP(1)) return;
-  const amount = randInt(2, 3);
+  let amount = randInt(2, 3);
+  if (gameState.inventory.canteen) amount += 1;
   gameState.inventory.rawWater += amount;
   if (biome === 'swamp') {
     addLog(`> You collect ${amount} water. It looks murky — purify before drinking.`, 'warning');
@@ -558,16 +705,32 @@ function rest() {
 
 function tendFire() {
   if (gameState.phase !== 'night') return;
-  if (gameState.inventory.wood < 1) {
-    addLog('> No wood left to feed the fire.', 'warning');
+  const inv = gameState.inventory;
+  const noWood  = inv.wood < 1;
+  const hasTorch = inv.torch > 0;
+
+  if (noWood && !hasTorch) {
+    addLog('> No wood or torch left to feed the fire.', 'warning');
     return;
   }
   if (!spendAP(1)) return;
-  gameState.inventory.wood -= 1;
 
-  // Rainforest biome: damp wood may fail to light (firePenalty)
+  // Torch fallback when out of wood
+  if (noWood && hasTorch) {
+    inv.torch -= 1;
+    gameState.fireActive  = true;
+    gameState.fireWentOut = false;
+    applyDelta('warmth', 15);
+    addLog('> You light a torch. The darkness retreats. [+15 Warmth]', 'success');
+    renderAll();
+    return;
+  }
+
+  inv.wood -= 1;
+
+  // Rainforest biome: damp wood may fail to light (fireKit ignores penalty)
   const penalty = biomeModifiers.firePenalty || 0;
-  if (penalty > 0 && Math.random() < penalty) {
+  if (penalty > 0 && !inv.fireKit && Math.random() < penalty) {
     addLog('> The damp wood struggles to catch. Fire did not light. [−1 Wood]', 'warning');
     updateCampfireSprite();
     renderAll();
@@ -585,11 +748,16 @@ function eatFood() {
   const inv = gameState.inventory;
   const available = [];
   if (inv.cookedFish  > 0) available.push({ key: 'cookedFish',  label: '🍣 Cooked Fish' });
+  if (inv.jerky       > 0) available.push({ key: 'jerky',       label: '🥩 Jerky' });
   if (inv.berries     > 0) available.push({ key: 'berries',     label: '🫐 Berries' });
   if (inv.mushroom    > 0) available.push({ key: 'mushroom',    label: '🍄 Mushroom' });
   if (inv.badMushroom > 0) available.push({ key: 'badMushroom', label: '🍄 Mushroom' }); // looks same!
   if (inv.rawFish     > 0) available.push({ key: 'rawFish',     label: '🐟 Raw Fish' });
+  if (inv.herbalTea   > 0) available.push({ key: 'herbalTea',   label: '🍵 Herbal Tea' });
   if (inv.bandage     > 0) available.push({ key: 'bandage',     label: '🩹 Bandage (+25 HP)' });
+  if (inv.poultice    > 0) available.push({ key: 'poultice',    label: '🌿 Herbal Poultice (+15 HP)' });
+  if (inv.antidote    > 0) available.push({ key: 'antidote',    label: '⚗️ Antidote' });
+  if (inv.splint      > 0) available.push({ key: 'splint',      label: '🩼 Splint (+30 HP)' });
 
   if (available.length === 0) {
     addLog('> You have nothing to eat.', 'warning');
@@ -641,6 +809,34 @@ function consumeFood(key) {
       applyDelta('health', 25);
       addLog('> You apply the bandage. [+25 Health]', 'success');
       break;
+    case 'herbalTea':
+      gameState.inventory.herbalTea -= 1;
+      applyDelta('thirst', 15);
+      applyDelta('health', 10);
+      addLog('> You drink herbal tea. Warm and soothing. [+15 Thirst, +10 Health]', 'success');
+      break;
+    case 'jerky':
+      gameState.inventory.jerky -= 1;
+      applyDelta('hunger', 20);
+      addLog('> You eat jerky. Tough but filling. [+20 Hunger]', 'success');
+      break;
+    case 'poultice':
+      gameState.inventory.poultice -= 1;
+      applyDelta('health', 15);
+      gameState.sickDaysLeft = 0;
+      addLog('> You apply the herbal poultice. [+15 Health, sickness cured]', 'success');
+      break;
+    case 'antidote':
+      gameState.inventory.antidote -= 1;
+      applyDelta('health', 10);
+      gameState.sickDaysLeft = 0;
+      addLog('> You take the antidote. [+10 Health, sickness cured]', 'success');
+      break;
+    case 'splint':
+      gameState.inventory.splint -= 1;
+      applyDelta('health', 30);
+      addLog('> You apply the splint. [+30 Health]', 'success');
+      break;
   }
   renderAll();
 }
@@ -663,23 +859,24 @@ function drinkWater() {
 function canCraft(id) {
   return Object.entries(RECIPES[id].needs).every(([item, qty]) => {
     const have = gameState.inventory[item];
+    if (typeof qty === 'boolean') return have === qty;
     return typeof have === 'boolean' ? false : have >= qty;
   });
 }
 
 function renderCraftModal() {
-  const btns  = document.querySelectorAll('.recipe-craft-btn');
-  const cards = document.querySelectorAll('.recipe-card');
-  RECIPE_ORDER.forEach((id, i) => {
-    if (!btns[i]) return;
-    const ok = canCraft(id);
-    btns[i].disabled = !ok;
-    btns[i].setAttribute('aria-disabled', String(!ok));
-    const card = cards[i];
+  const inv = gameState.inventory;
+  RECIPE_ORDER.forEach(id => {
+    const card = document.querySelector(`.recipe-card[data-recipe="${id}"]`);
     if (!card) return;
+    const ok  = canCraft(id);
+    const btn = card.querySelector('.recipe-craft-btn');
+    if (btn) {
+      btn.disabled = !ok;
+      btn.setAttribute('aria-disabled', String(!ok));
+    }
     card.classList.toggle('recipe-card--unavailable', !ok);
 
-    // Inject / update ingredient availability line
     let stockEl = card.querySelector('.recipe-card__stock');
     if (!stockEl) {
       stockEl = document.createElement('div');
@@ -696,9 +893,12 @@ function renderCraftModal() {
       const ingrEl = card.querySelector('.recipe-card__ingredients');
       if (ingrEl) ingrEl.after(stockEl);
     }
-    const inv = gameState.inventory;
     stockEl.innerHTML = Object.entries(RECIPES[id].needs).map(([item, qty]) => {
-      const have = typeof inv[item] === 'boolean' ? (inv[item] ? 1 : 0) : (inv[item] || 0);
+      if (typeof qty === 'boolean') {
+        const met = inv[item] === qty;
+        return `<span style="color:${met ? '#4ade80' : '#ef4444'};font-size:1rem;">${item}: ${met ? '✓' : '✗'}</span>`;
+      }
+      const have = typeof inv[item] === 'number' ? (inv[item] || 0) : 0;
       const met  = have >= qty;
       return `<span style="color:${met ? '#4ade80' : '#ef4444'};font-size:1rem;">${item} ×${qty} <em style="opacity:0.7">(have: ${have})</em></span>`;
     }).join('');
@@ -709,9 +909,9 @@ function craft(recipeId) {
   if (!canCraft(recipeId)) return;
   const recipe = RECIPES[recipeId];
 
-  // Consume ingredients
+  // Consume ingredients (skip boolean requirements — gives already handles them)
   Object.entries(recipe.needs).forEach(([item, qty]) => {
-    gameState.inventory[item] -= qty;
+    if (typeof qty !== 'boolean') gameState.inventory[item] -= qty;
   });
 
   // Apply results
@@ -728,14 +928,16 @@ function craft(recipeId) {
     return;
   }
 
-  addLog(`> Crafted: ${RECIPE_LABELS[recipeId]}.`, 'success');
+  addLog(`> Crafted: ${recipe.label}.`, 'success');
 
-  // MacGyver achievement tracking
+  // MacGyver: track crafted recipes; unlock when one from each category is crafted
   if (!gameState.counters.craftedRecipes.includes(recipeId)) {
     gameState.counters.craftedRecipes.push(recipeId);
   }
-  const allCraftable = Object.keys(RECIPES).filter(id => id !== 'signalFire');
-  if (allCraftable.every(id => gameState.counters.craftedRecipes.includes(id))) {
+  const categories = ['food', 'gear', 'medicine', 'tools'];
+  if (categories.every(cat =>
+    gameState.counters.craftedRecipes.some(id => RECIPES[id]?.category === cat)
+  )) {
     unlockAchievement('macgyver');
   }
 
@@ -837,6 +1039,25 @@ function endPhase() {
     gameState.day++;
     gameState.fireActive = false;   // fire goes out overnight unless tended
     gameState.gatorFlag  = false;   // per-day flag resets
+
+    // Snare: random morning catch
+    if (gameState.inventory.snare) {
+      const r = Math.random();
+      if (r >= 0.15) {
+        const caught = r < 0.50 ? 1 : r < 0.85 ? 2 : r < 0.97 ? 3 : 4;
+        gameState.inventory.rawFish += caught;
+        addLog(`> Snare: caught ${caught} raw fish overnight!`, 'success');
+      } else {
+        addLog('> Snare: nothing caught today.', 'info');
+      }
+    }
+
+    // Canteen: auto-purify 1 raw water each morning
+    if (gameState.inventory.canteen && gameState.inventory.rawWater > 0) {
+      gameState.inventory.rawWater    -= 1;
+      gameState.inventory.purifiedWater += 1;
+      addLog('> Canteen: auto-purified 1 raw water.', 'info');
+    }
 
     // Well Fed check
     if (gameState.stats.hunger > 80) {
@@ -1476,9 +1697,9 @@ function wireButtons() {
     }
   });
 
-  // Wire each recipe's CRAFT button by position
-  document.querySelectorAll('.recipe-craft-btn').forEach((btn, i) => {
-    const id = RECIPE_ORDER[i];
+  // Wire each recipe's CRAFT button by data-recipe on the parent card
+  document.querySelectorAll('.recipe-craft-btn').forEach(btn => {
+    const id = btn.closest('.recipe-card')?.dataset.recipe;
     if (id) btn.addEventListener('click', () => craft(id));
   });
 }
@@ -1538,8 +1759,10 @@ function init() {
       wood: 3, rope: 0, cloth: 1, vine: 0, stone: 0, stick: 2,
       rawFish: 0, cookedFish: 0, berries: 0, mushroom: 0, badMushroom: 0,
       rawWater: 0,
-      fishingRod: false, bandage: 0, purifiedWater: 0,
+      fishingRod: false, proRod: false, bandage: 0, purifiedWater: 0,
       improvedShelter: false, signalFire: false,
+      jerky: 0, herbalTea: 0, snare: false, torch: 0, canteen: false,
+      sled: false, poultice: 0, antidote: 0, splint: 0, fireKit: false, axe: false,
     },
     shelterLevel: 0,
     fireActive:   true,

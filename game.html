@@ -669,6 +669,35 @@
       box-shadow: none;
     }
 
+    /* Recipe category sections */
+    .recipe-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .recipe-category__header {
+      font-family: var(--font-pixel);
+      font-size: 0.38rem;
+      color: var(--pixel-orange);
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(74,222,128,0.2);
+      margin-bottom: 0.5rem;
+    }
+
+    .recipe-category .recipe-grid {
+      margin: 0;
+    }
+
+    .recipe-card__desc {
+      font-family: var(--font-terminal);
+      font-size: 0.95rem;
+      color: #475569;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
     /* ── DEATH SCREEN ───────────────────────────────────────── */
     #death-screen {
       display: none;
@@ -1930,29 +1959,89 @@
           <span class="inv-item__name">Mushroom</span>
           <span class="inv-item__count" id="inv-mushroom">x0</span>
         </div>
+        <div class="inv-item" data-item="jerky" title="Eat for +20 Hunger. Won't spoil.">
+          <span class="inv-item__icon" aria-hidden="true">🥩</span>
+          <span class="inv-item__name">Jerky</span>
+          <span class="inv-item__count" id="inv-jerky">×0</span>
+        </div>
+        <div class="inv-item" data-item="herbal-tea" title="Drink for +15 Thirst, +10 Health">
+          <span class="inv-item__icon" aria-hidden="true">🍵</span>
+          <span class="inv-item__name">Herbal Tea</span>
+          <span class="inv-item__count" id="inv-herbal-tea">×0</span>
+        </div>
       </div>
 
       <!-- Crafted -->
       <div id="inv-crafted" class="inv-pane" role="tabpanel" aria-labelledby="tab-crafted">
+        <div class="inv-item" data-item="purified-water" title="Safe to drink [+25 Thirst]">
+          <span class="inv-item__icon" aria-hidden="true">💧</span>
+          <span class="inv-item__name">Purified Water</span>
+          <span class="inv-item__count" id="inv-purified-water">×0</span>
+        </div>
         <div class="inv-item" data-item="fishing-rod" title="Unlocks the Fish action">
           <span class="inv-item__icon" aria-hidden="true">🎣</span>
           <span class="inv-item__name">Fishing Rod</span>
           <span class="inv-item__count" id="inv-fishing-rod">×0</span>
         </div>
+        <div class="inv-item" data-item="pro-rod" title="Fish gives +2 extra. Replaces basic rod.">
+          <span class="inv-item__icon" aria-hidden="true">🎣</span>
+          <span class="inv-item__name">Pro Rod</span>
+          <span class="inv-item__count" id="inv-pro-rod">×0</span>
+        </div>
         <div class="inv-item" data-item="improved-shelter" title="Reduces night warmth drain by 50%">
           <span class="inv-item__icon" aria-hidden="true">🏕️</span>
-          <span class="inv-item__name">Improved Shelter</span>
+          <span class="inv-item__name">Impr. Shelter</span>
           <span class="inv-item__count" id="inv-improved-shelter">×0</span>
+        </div>
+        <div class="inv-item" data-item="snare" title="Each morning: random food catch">
+          <span class="inv-item__icon" aria-hidden="true">🪤</span>
+          <span class="inv-item__name">Rope Snare</span>
+          <span class="inv-item__count" id="inv-snare">×0</span>
+        </div>
+        <div class="inv-item" data-item="torch" title="+15 Warmth at night when out of wood">
+          <span class="inv-item__icon" aria-hidden="true">🔦</span>
+          <span class="inv-item__name">Torch</span>
+          <span class="inv-item__count" id="inv-torch">×0</span>
+        </div>
+        <div class="inv-item" data-item="canteen" title="Fetch Water +1 extra. Auto-purifies 1 raw water/morning.">
+          <span class="inv-item__icon" aria-hidden="true">🫙</span>
+          <span class="inv-item__name">Canteen</span>
+          <span class="inv-item__count" id="inv-canteen">×0</span>
+        </div>
+        <div class="inv-item" data-item="sled" title="Gather Wood gives +2 extra per action">
+          <span class="inv-item__icon" aria-hidden="true">🛷</span>
+          <span class="inv-item__name">Sled</span>
+          <span class="inv-item__count" id="inv-sled">×0</span>
+        </div>
+        <div class="inv-item" data-item="axe" title="Gather Wood gives +3 extra per action">
+          <span class="inv-item__icon" aria-hidden="true">🪓</span>
+          <span class="inv-item__name">Axe</span>
+          <span class="inv-item__count" id="inv-axe">×0</span>
+        </div>
+        <div class="inv-item" data-item="fire-kit" title="Guarantees fire lights. Ignores rainforest penalty.">
+          <span class="inv-item__icon" aria-hidden="true">🔥</span>
+          <span class="inv-item__name">Fire Kit</span>
+          <span class="inv-item__count" id="inv-fire-kit">×0</span>
         </div>
         <div class="inv-item" data-item="bandage" title="Use via Eat action — restores +25 Health">
           <span class="inv-item__icon" aria-hidden="true">🩹</span>
           <span class="inv-item__name">Bandage</span>
-          <span class="inv-item__count" id="inv-bandage">x0</span>
+          <span class="inv-item__count" id="inv-bandage">×0</span>
         </div>
-        <div class="inv-item" data-item="purified-water" title="Safe to drink [+25 Thirst]">
-          <span class="inv-item__icon" aria-hidden="true">🫙</span>
-          <span class="inv-item__name">Purified Water</span>
-          <span class="inv-item__count" id="inv-purified-water">x0</span>
+        <div class="inv-item" data-item="poultice" title="+15 Health. Cures sickness.">
+          <span class="inv-item__icon" aria-hidden="true">🌿</span>
+          <span class="inv-item__name">Poultice</span>
+          <span class="inv-item__count" id="inv-poultice">×0</span>
+        </div>
+        <div class="inv-item" data-item="antidote" title="+10 Health. Fully cures sickness.">
+          <span class="inv-item__icon" aria-hidden="true">⚗️</span>
+          <span class="inv-item__name">Antidote</span>
+          <span class="inv-item__count" id="inv-antidote">×0</span>
+        </div>
+        <div class="inv-item" data-item="splint" title="+30 Health.">
+          <span class="inv-item__icon" aria-hidden="true">🩼</span>
+          <span class="inv-item__name">Splint</span>
+          <span class="inv-item__count" id="inv-splint">×0</span>
         </div>
       </div>
 
@@ -1988,67 +2077,251 @@
       </button>
     </div>
 
-    <div class="recipe-grid">
+    <div class="recipe-categories">
 
-      <!-- Purified Water -->
-      <div class="recipe-card recipe-card--unavailable">
-        <p class="recipe-card__result">💧 PURIFIED WATER</p>
-        <p class="recipe-card__ingredients">
-          Raw Water x1 + Wood x1<br />
-          <span class="recipe-card__arrow">→</span>
-          <span class="recipe-card__output">Purified Water x2</span>
-        </p>
-        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      <!-- ── Food & Cooking ───────────────────────────── -->
+      <div class="recipe-category">
+        <p class="recipe-category__header">🍖 FOOD &amp; COOKING</p>
+        <div class="recipe-grid">
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="cookFish">
+            <p class="recipe-card__result">🍳 COOKED FISH</p>
+            <p class="recipe-card__desc">Cook raw fish over a fire. Safe and filling.</p>
+            <p class="recipe-card__ingredients">
+              Raw Fish ×1 + Wood ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Cooked Fish ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="purifiedWater">
+            <p class="recipe-card__result">💧 PURIFIED WATER</p>
+            <p class="recipe-card__desc">Boil raw water to make it safe to drink.</p>
+            <p class="recipe-card__ingredients">
+              Raw Water ×1 + Wood ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Purified Water ×2</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="herbalTea">
+            <p class="recipe-card__result">🍵 HERBAL TEA</p>
+            <p class="recipe-card__desc">Warm and restorative. Restores thirst and health.</p>
+            <p class="recipe-card__ingredients">
+              Berries ×2 + Raw Water ×1 + Wood ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Herbal Tea ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="jerky">
+            <p class="recipe-card__result">🥩 JERKY</p>
+            <p class="recipe-card__desc">Dried preserved meat. Lasts forever.</p>
+            <p class="recipe-card__ingredients">
+              Cooked Fish ×2 + Cloth ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Jerky ×3</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+        </div>
       </div>
 
-      <!-- Bandage -->
-      <div class="recipe-card recipe-card--unavailable">
-        <p class="recipe-card__result">🩹 BANDAGE</p>
-        <p class="recipe-card__ingredients">
-          Cloth x1 + Stick x1<br />
-          <span class="recipe-card__arrow">→</span>
-          <span class="recipe-card__output">Bandage x1</span>
-        </p>
-        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      <!-- ── Survival Gear ─────────────────────────────── -->
+      <div class="recipe-category">
+        <p class="recipe-category__header">🛡️ SURVIVAL GEAR</p>
+        <div class="recipe-grid">
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="shelter">
+            <p class="recipe-card__result">🏕️ IMPROVED SHELTER</p>
+            <p class="recipe-card__desc">Reduces night warmth drain by 50%.</p>
+            <p class="recipe-card__ingredients">
+              Wood ×5 + Rope ×2<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Improved Shelter</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="snare">
+            <p class="recipe-card__result">🪤 ROPE SNARE</p>
+            <p class="recipe-card__desc">Each morning: random food catch.</p>
+            <p class="recipe-card__ingredients">
+              Rope ×1 + Stick ×2<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Rope Snare</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="torch">
+            <p class="recipe-card__result">🔦 TORCH</p>
+            <p class="recipe-card__desc">+15 Warmth at night when out of wood.</p>
+            <p class="recipe-card__ingredients">
+              Stick ×1 + Cloth ×1 + Wood ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Torch ×2</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="canteen">
+            <p class="recipe-card__result">🫙 WATER CANTEEN</p>
+            <p class="recipe-card__desc">Fetch Water +1 extra. Auto-purifies 1 raw water each morning.</p>
+            <p class="recipe-card__ingredients">
+              Cloth ×2 + Vine ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Water Canteen</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="sled">
+            <p class="recipe-card__result">🛷 SLED</p>
+            <p class="recipe-card__desc">Gather Wood gives +2 extra per action.</p>
+            <p class="recipe-card__ingredients">
+              Wood ×4 + Rope ×2<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Sled</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+        </div>
       </div>
 
-      <!-- Fishing Rod -->
-      <div class="recipe-card recipe-card--unavailable">
-        <p class="recipe-card__result">🎣 FISHING ROD</p>
-        <p class="recipe-card__ingredients">
-          Stick x2 + Vine x1<br />
-          <span class="recipe-card__arrow">→</span>
-          <span class="recipe-card__output">Fishing Rod x1</span>
-        </p>
-        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      <!-- ── Medicine ──────────────────────────────────── -->
+      <div class="recipe-category">
+        <p class="recipe-category__header">💊 MEDICINE</p>
+        <div class="recipe-grid">
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="bandage">
+            <p class="recipe-card__result">🩹 BANDAGE</p>
+            <p class="recipe-card__desc">Apply via Eat action to restore +25 Health.</p>
+            <p class="recipe-card__ingredients">
+              Cloth ×1 + Stick ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Bandage ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="poultice">
+            <p class="recipe-card__result">🌿 HERBAL POULTICE</p>
+            <p class="recipe-card__desc">+15 Health. Cures sickness immediately.</p>
+            <p class="recipe-card__ingredients">
+              Berries ×1 + Cloth ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Herbal Poultice ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="antidote">
+            <p class="recipe-card__result">⚗️ ANTIDOTE</p>
+            <p class="recipe-card__desc">Fully cures sickness. +10 Health.</p>
+            <p class="recipe-card__ingredients">
+              Mushroom ×2 + Raw Water ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Antidote ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="splint">
+            <p class="recipe-card__result">🩼 SPLINT</p>
+            <p class="recipe-card__desc">+30 Health. Strong recovery item.</p>
+            <p class="recipe-card__ingredients">
+              Stick ×2 + Cloth ×2<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Splint ×1</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+        </div>
       </div>
 
-      <!-- Improved Shelter -->
-      <div class="recipe-card recipe-card--unavailable">
-        <p class="recipe-card__result">🏕️ IMPROVED SHELTER</p>
-        <p class="recipe-card__ingredients">
-          Wood x5 + Rope x2<br />
-          <span class="recipe-card__arrow">→</span>
-          <span class="recipe-card__output">Improved Shelter</span>
-        </p>
-        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+      <!-- ── Tools ─────────────────────────────────────── -->
+      <div class="recipe-category">
+        <p class="recipe-category__header">🔧 TOOLS</p>
+        <div class="recipe-grid">
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="fishingRod">
+            <p class="recipe-card__result">🎣 FISHING ROD</p>
+            <p class="recipe-card__desc">Unlocks the Fish action.</p>
+            <p class="recipe-card__ingredients">
+              Stick ×2 + Vine ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Fishing Rod</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="proRod">
+            <p class="recipe-card__result">🎣 PRO FISHING ROD</p>
+            <p class="recipe-card__desc">Fish gives +2 extra per action. Replaces basic rod.</p>
+            <p class="recipe-card__ingredients">
+              Fishing Rod + Vine ×2 + Stone ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Pro Fishing Rod</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="fireKit">
+            <p class="recipe-card__result">🔥 FIRE STARTER KIT</p>
+            <p class="recipe-card__desc">Guarantees fire lights. Ignores rainforest penalty.</p>
+            <p class="recipe-card__ingredients">
+              Stone ×2 + Cloth ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Fire Starter Kit</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+          <div class="recipe-card recipe-card--unavailable" data-recipe="axe">
+            <p class="recipe-card__result">🪓 UPGRADED AXE</p>
+            <p class="recipe-card__desc">Gather Wood gives +3 extra wood per action.</p>
+            <p class="recipe-card__ingredients">
+              Stone ×2 + Stick ×2 + Vine ×1<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output">Upgraded Axe</span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT</button>
+          </div>
+
+        </div>
       </div>
 
-      <!-- Signal Fire — WIN CONDITION, full width -->
-      <div class="recipe-card recipe-card--signal-fire recipe-card--unavailable"
-           style="grid-column: 1 / -1;">
-        <p class="recipe-card__result">🔥 SIGNAL FIRE — WIN CONDITION</p>
-        <p class="recipe-card__ingredients">
-          Wood x8 + Cloth x3 + Stone x2<br />
-          <span class="recipe-card__arrow">→</span>
-          <span class="recipe-card__output" style="color:var(--pixel-yellow)">
-            🔥 Signal Fire — triggers rescue
-          </span>
-        </p>
-        <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT &amp; LIGHT</button>
+      <!-- ── Special ──────────────────────────────────── -->
+      <div class="recipe-category">
+        <p class="recipe-category__header">🏆 SPECIAL</p>
+        <div class="recipe-grid">
+
+          <div class="recipe-card recipe-card--signal-fire recipe-card--unavailable"
+               data-recipe="signalFire"
+               style="grid-column: 1 / -1;">
+            <p class="recipe-card__result">🔥 SIGNAL FIRE — WIN CONDITION</p>
+            <p class="recipe-card__desc">Build the Signal Fire. Triggers rescue. THIS IS HOW YOU WIN.</p>
+            <p class="recipe-card__ingredients">
+              Wood ×8 + Cloth ×3 + Stone ×2<br />
+              <span class="recipe-card__arrow">→</span>
+              <span class="recipe-card__output" style="color:var(--pixel-yellow)">
+                🔥 Signal Fire — triggers rescue
+              </span>
+            </p>
+            <button class="recipe-craft-btn" disabled aria-disabled="true">CRAFT &amp; LIGHT</button>
+          </div>
+
+        </div>
       </div>
 
-    </div><!-- /.recipe-grid -->
+    </div><!-- /.recipe-categories -->
   </div><!-- /.modal-box -->
 
 </div><!-- /#craft-modal -->
