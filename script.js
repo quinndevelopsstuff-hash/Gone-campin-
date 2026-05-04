@@ -114,6 +114,9 @@ function renderAll() {
   renderActions();
   renderInventory();
   renderLog();
+  updateScenePhase(gameState.phase);
+  moveSunMoon(gameState.phase);
+  updateCampfireSprite();
 }
 
 function renderBanner() {
@@ -245,6 +248,98 @@ function renderLog() {
   logEl.innerHTML = gameState.log.slice(0, 20)
     .map(e => `<span class="log-entry log-${e.type}">${e.message}</span>`)
     .join('');
+}
+
+// ── SCENE BANNER ──────────────────────────────────────────────────────────────
+
+function setBiomeScene(b) {
+  document.querySelectorAll('.biome-layer').forEach(el => el.classList.remove('active'));
+  const layer = document.getElementById(`biome-${b}`);
+  if (layer) layer.classList.add('active');
+
+  const label = document.getElementById('biome-scene-label');
+  if (label) label.textContent = (BIOME_NAMES[b] || b).toUpperCase();
+
+  const rainEl = document.getElementById('rain-effect');
+  const snowEl = document.getElementById('snow-effect');
+  if (!rainEl || !snowEl) return;
+
+  rainEl.innerHTML = '';
+  snowEl.innerHTML = '';
+  rainEl.style.display = 'none';
+  snowEl.style.display = 'none';
+
+  if (b === 'rainforest') {
+    for (let i = 0; i < 28; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+      drop.style.left              = `${Math.random() * 100}%`;
+      drop.style.top               = `${Math.random() * -20}px`;
+      drop.style.animationDuration = `${0.5 + Math.random() * 0.7}s`;
+      drop.style.animationDelay    = `${Math.random() * 1.5}s`;
+      rainEl.appendChild(drop);
+    }
+    rainEl.style.display = 'block';
+  }
+
+  if (b === 'tundra') {
+    for (let i = 0; i < 18; i++) {
+      const flake = document.createElement('div');
+      flake.className = 'snowflake';
+      flake.style.left              = `${Math.random() * 100}%`;
+      flake.style.top               = `${Math.random() * -10}px`;
+      flake.style.animationDuration = `${2.5 + Math.random() * 3}s`;
+      flake.style.animationDelay    = `${Math.random() * 4}s`;
+      snowEl.appendChild(flake);
+    }
+    snowEl.style.display = 'block';
+  }
+}
+
+function updateScenePhase(phase) {
+  const scene = document.getElementById('game-scene');
+  if (!scene) return;
+  scene.classList.remove('phase-morning', 'phase-afternoon', 'phase-dusk', 'phase-night');
+  scene.classList.add(PHASE_CLASSES[phase]);
+
+  const nightOverlay = document.getElementById('night-overlay');
+  if (nightOverlay) nightOverlay.style.display = phase === 'night' ? 'block' : 'none';
+}
+
+function moveSunMoon(phase) {
+  const el = document.getElementById('sun-moon');
+  if (!el) return;
+  const positions = { morning: '15%', afternoon: '50%', night: '80%' };
+  el.style.left    = positions[phase] || '50%';
+  el.textContent   = phase === 'night' ? '🌙' : '☀️';
+}
+
+function updateCampfireSprite() {
+  const el = document.getElementById('campfire-sprite');
+  if (!el) return;
+  el.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;width:48px;height:56px;';
+
+  if (gameState.fireActive) {
+    wrap.innerHTML = `
+      <div style="position:absolute;bottom:0;left:8px;width:32px;height:8px;background:#5a3a0a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:4px;left:12px;width:24px;height:6px;background:#7a4a0a;"></div>
+      <div style="position:absolute;bottom:8px;left:20px;width:8px;height:24px;background:#ef4444;animation:flicker 0.4s steps(2) infinite;"></div>
+      <div style="position:absolute;bottom:8px;left:13px;width:8px;height:18px;background:#f97316;animation:flicker 0.55s steps(2) infinite 0.15s;"></div>
+      <div style="position:absolute;bottom:8px;left:27px;width:8px;height:14px;background:#f97316;animation:flicker 0.5s steps(2) infinite 0.3s;"></div>
+      <div style="position:absolute;bottom:18px;left:21px;width:6px;height:12px;background:#fbbf24;animation:flicker 0.35s steps(2) infinite 0.1s;"></div>
+      <div style="position:absolute;bottom:6px;left:16px;width:16px;height:6px;background:#fbbf24;opacity:0.5;box-shadow:0 0 8px rgba(251,191,36,0.7);"></div>`;
+  } else {
+    wrap.innerHTML = `
+      <div style="position:absolute;bottom:0;left:8px;width:32px;height:8px;background:#2a1a0a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:0;left:14px;width:20px;height:4px;background:#5a5a5a;"></div>
+      <div style="position:absolute;bottom:8px;left:20px;width:4px;height:8px;background:rgba(150,150,150,0.55);animation:smoke-rise 2s ease-out infinite;"></div>
+      <div style="position:absolute;bottom:8px;left:26px;width:4px;height:8px;background:rgba(150,150,150,0.4);animation:smoke-rise 2.5s ease-out infinite 0.8s;"></div>`;
+  }
+
+  el.appendChild(wrap);
 }
 
 // ── ACTION HANDLERS ──────────────────────────────────────────────────────────
@@ -1220,6 +1315,9 @@ function init() {
 
   // Apply biome-specific starting adjustments (will prepend their own log entries)
   applyBiomeStart();
+
+  // Set scene banner to match chosen biome
+  setBiomeScene(biome);
 
   // Inject dynamic DOM elements
   injectVignette();
