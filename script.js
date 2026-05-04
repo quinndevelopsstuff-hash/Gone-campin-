@@ -1977,15 +1977,18 @@ function showBiomeIntro() {
     setTimeout(() => { line.style.opacity = '1'; }, afterStats + 400 + i * 350);
   });
 
-  setTimeout(() => {
-    document.getElementById('intro-progress-bar').style.width = '100%';
-  }, 100);
+  const continueBtn = document.getElementById('intro-continue-btn');
 
-  setTimeout(() => {
+  const afterFlavor = afterStats + 400 + intro.flavor.length * 350;
+  setTimeout(() => { continueBtn.style.opacity = '1'; }, afterFlavor);
+
+  function dismissIntro() {
+    continueBtn.removeEventListener('click', dismissIntro);
     overlay.style.transition = 'opacity 0.8s ease';
     overlay.style.opacity = '0';
     setTimeout(() => { overlay.style.display = 'none'; }, 800);
-  }, 5000);
+  }
+  continueBtn.addEventListener('click', dismissIntro);
 }
 
 // Boot once DOM is ready
