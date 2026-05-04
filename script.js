@@ -331,7 +331,11 @@ function renderActions() {
     if (!btn) return;
     btn.disabled = disabled;
     btn.setAttribute('aria-disabled', String(disabled));
-    if (tooltip !== undefined) btn.dataset.tooltip = tooltip;
+    if (tooltip) {
+      btn.dataset.tooltip = tooltip;
+    } else {
+      delete btn.dataset.tooltip;
+    }
   }
 
   // Day-only 1-AP actions
