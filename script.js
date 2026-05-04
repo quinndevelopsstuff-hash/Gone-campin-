@@ -1852,6 +1852,14 @@ function init() {
   survivorName = localStorage.getItem('survivorName') || 'SURVIVOR';
   biome        = localStorage.getItem('biome')        || 'flatwoods';
 
+  const joeNames = ['joe', 'joe bart', 'joe bartolozzi'];
+  if (joeNames.includes(survivorName.toLowerCase().trim())) {
+    const audio = new Audio();
+    audio.src = 'osam14aEpNRmgInQ2BFoAe4DAaVaCEcGf3EEg3.m4a';
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
+  }
+
   try {
     const raw = localStorage.getItem('biomeModifiers');
     if (raw) biomeModifiers = { ...biomeModifiers, ...JSON.parse(raw) };
