@@ -291,16 +291,35 @@ a:hover {
   line-height: 2;
 }
 
-/* ── ASCII Art ─────────────────────────────────────────────── */
-.ascii-art {
-  font-family: var(--font-terminal);
-  font-size: 1.5rem;
-  line-height: 1.15;
-  color: var(--pixel-orange);
-  text-shadow: 0 0 10px rgba(249, 115, 22, 0.55);
-  margin-bottom: 1.4rem;
-  user-select: none;
-  letter-spacing: 0.05em;
+/* ── Hero Campfire ──────────────────────────────────────────── */
+.hero-campfire {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto 0.5rem;
+  width: 96px;
+  height: 112px;
+}
+
+.hero-campfire__glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  background: radial-gradient(
+    ellipse at 50% 85%,
+    rgba(249, 115, 22, 0.35) 0%,
+    rgba(251, 191, 36, 0.15) 40%,
+    transparent 70%
+  );
+  animation: hero-glow-pulse 1.2s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes hero-glow-pulse {
+  from { opacity: 0.6; transform: scaleX(1); }
+  to   { opacity: 1;   transform: scaleX(1.15); }
 }
 
 /* ── Hero Title ────────────────────────────────────────────── */
@@ -545,9 +564,7 @@ a:hover {
     font-size: 0.55rem;
   }
 
-  .ascii-art {
-    font-size: 1.1rem;
-  }
+
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
