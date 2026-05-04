@@ -90,6 +90,13 @@ const RECIPES = {
     label: '🪤 Rope Snare',
     desc: 'Set a trap. Each morning: random food catch (rarer is more).',
   },
+  twistedRope: {
+    needs: { vine: 3 },
+    gives: { rope: 2 },
+    category: 'gear',
+    label: '🪢 Twisted Rope ×2',
+    desc: 'Braid vines together into usable rope.',
+  },
   torch: {
     needs: { stick: 1, cloth: 1, wood: 1 },
     gives: { torch: 2 },
@@ -183,7 +190,7 @@ const RECIPE_ORDER = [
   // 🍖 Food & Cooking
   'cookFish', 'purifiedWater', 'herbalTea', 'jerky',
   // 🛡️ Survival Gear
-  'shelter', 'snare', 'torch', 'canteen', 'sled',
+  'shelter', 'snare', 'twistedRope', 'torch', 'canteen', 'sled',
   // 💊 Medicine
   'bandage', 'poultice', 'antidote', 'splint',
   // 🔧 Tools
@@ -352,7 +359,8 @@ function renderActions() {
          !isNight ? 'Night phase only' : noFuel ? 'Need wood ×1 or torch' : undefined);
 
   // Free (0 AP) actions
-  const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom', 'bandage']
+  const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom',
+                   'bandage', 'jerky', 'herbalTea', 'poultice', 'antidote', 'splint']
     .some(k => inventory[k] > 0);
   setBtn('btn-eat',   !hasFood,                    !hasFood ? 'No food available' : undefined);
   setBtn('btn-drink', inventory.purifiedWater <= 0, inventory.purifiedWater <= 0 ? 'No purified water' : undefined);
