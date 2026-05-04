@@ -208,8 +208,8 @@ function renderActions() {
   setBtn('btn-fetch-water', isNight || ap < 1 || gatorFlag,
          gatorFlag ? 'Something lurks in the water' : undefined);
 
-  // Day-only 2-AP actions
-  setBtn('btn-repair-shelter', isNight || ap < 2);
+  // repairShelter now costs 1 AP; explore stays at 2 AP
+  setBtn('btn-repair-shelter', isNight || ap < 1);
   setBtn('btn-explore',        isNight || ap < 2);
 
   // Fish: needs rod + daytime + 2 AP
@@ -223,7 +223,7 @@ function renderActions() {
          !isNight ? 'Night phase only' : noWoodForFire ? 'Need wood ×1' : undefined);
 
   // Free (0 AP) actions
-  const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom']
+  const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom', 'bandage']
     .some(k => inventory[k] > 0);
   setBtn('btn-eat',   !hasFood,                    !hasFood ? 'No food available' : undefined);
   setBtn('btn-drink', inventory.purifiedWater <= 0, inventory.purifiedWater <= 0 ? 'No purified water' : undefined);
@@ -425,7 +425,7 @@ function repairShelter() {
     addLog('> Not enough wood. Need wood ×2.', 'warning');
     return;
   }
-  if (!spendAP(2)) return;
+  if (!spendAP(1)) return;
   gameState.inventory.wood -= 2;
   gameState.shelterLevel = Math.min(2, gameState.shelterLevel + 1);
   addLog('> You reinforce the shelter. It looks sturdier.', 'success');
@@ -488,9 +488,19 @@ function tendFire() {
     return;
   }
   if (!spendAP(1)) return;
-  gameState.inventory.wood        -= 1;
-  gameState.fireActive             = true;
-  gameState.fireWentOut            = false;
+  gameState.inventory.wood -= 1;
+
+  // Rainforest biome: damp wood may fail to light (firePenalty)
+  const penalty = biomeModifiers.firePenalty || 0;
+  if (penalty > 0 && Math.random() < penalty) {
+    addLog('> The damp wood struggles to catch. Fire did not light. [−1 Wood]', 'warning');
+    updateCampfireSprite();
+    renderAll();
+    return;
+  }
+
+  gameState.fireActive  = true;
+  gameState.fireWentOut = false;
   applyDelta('warmth', 10);
   addLog('> You tend the fire. The flames grow stronger. [+10 Warmth]', 'success');
   renderAll();
@@ -504,6 +514,7 @@ function eatFood() {
   if (inv.mushroom    > 0) available.push({ key: 'mushroom',    label: '🍄 Mushroom' });
   if (inv.badMushroom > 0) available.push({ key: 'badMushroom', label: '🍄 Mushroom' }); // looks same!
   if (inv.rawFish     > 0) available.push({ key: 'rawFish',     label: '🐟 Raw Fish' });
+  if (inv.bandage     > 0) available.push({ key: 'bandage',     label: '🩹 Bandage (+25 HP)' });
 
   if (available.length === 0) {
     addLog('> You have nothing to eat.', 'warning');
@@ -550,6 +561,11 @@ function consumeFood(key) {
       applyDelta('hunger', 25);
       addLog('> You eat cooked fish. Much better. [+25 Hunger]', 'success');
       break;
+    case 'bandage':
+      gameState.inventory.bandage -= 1;
+      applyDelta('health', 25);
+      addLog('> You apply the bandage. [+25 Health]', 'success');
+      break;
   }
   renderAll();
 }
@@ -584,7 +600,33 @@ function renderCraftModal() {
     const ok = canCraft(id);
     btns[i].disabled = !ok;
     btns[i].setAttribute('aria-disabled', String(!ok));
-    cards[i]?.classList.toggle('recipe-card--unavailable', !ok);
+    const card = cards[i];
+    if (!card) return;
+    card.classList.toggle('recipe-card--unavailable', !ok);
+
+    // Inject / update ingredient availability line
+    let stockEl = card.querySelector('.recipe-card__stock');
+    if (!stockEl) {
+      stockEl = document.createElement('div');
+      stockEl.className = 'recipe-card__stock';
+      stockEl.style.cssText = [
+        "font-family:'VT323',monospace",
+        'font-size:1rem',
+        'line-height:1.5',
+        'margin:0.2rem 0 0.3rem',
+        'display:flex',
+        'flex-wrap:wrap',
+        'gap:0.4rem',
+      ].join(';');
+      const ingrEl = card.querySelector('.recipe-card__ingredients');
+      if (ingrEl) ingrEl.after(stockEl);
+    }
+    const inv = gameState.inventory;
+    stockEl.innerHTML = Object.entries(RECIPES[id].needs).map(([item, qty]) => {
+      const have = typeof inv[item] === 'boolean' ? (inv[item] ? 1 : 0) : (inv[item] || 0);
+      const met  = have >= qty;
+      return `<span style="color:${met ? '#4ade80' : '#ef4444'};font-size:1rem;">${item} ×${qty} <em style="opacity:0.7">(have: ${have})</em></span>`;
+    }).join('');
   });
 }
 
@@ -634,13 +676,13 @@ function endPhase() {
 
   // ── Stat drains ───────────────────────────────────────────
   applyDelta('hunger', -8);
-  applyDelta('thirst', -Math.round(12 * (mods.thirstDrain || 1)));
-  applyDelta('energy', -6);
+  applyDelta('thirst', -Math.round(10 * (mods.thirstDrain || 1)));
+  applyDelta('energy', -5);
 
   // Warmth drain depends on phase, fire, and shelter
   let warmthBase;
   if (phase === 'night') {
-    warmthBase = gameState.fireActive ? 5 : 15;
+    warmthBase = gameState.fireActive ? 3 : 20;
     if (gameState.inventory.improvedShelter) warmthBase = Math.floor(warmthBase * 0.5);
     // Fire keeper tracking
     if (gameState.fireActive) {
@@ -685,10 +727,22 @@ function endPhase() {
     deathCause = deathCause || 'warmth';
   }
 
-  const thirstDrain = Math.round(12 * (mods.thirstDrain || 1));
+  // Low-stat warnings (once per phase transition, before drain summary)
+  const LOW_STAT_WARNINGS = {
+    health: '> ⚠️ CRITICAL HEALTH! Find medicine or rest immediately.',
+    hunger: '> ⚠️ STARVING! Find food immediately.',
+    thirst: '> ⚠️ SEVERELY THIRSTY! Drink water immediately.',
+    warmth: '> ⚠️ DANGEROUSLY COLD! Tend your fire or find shelter.',
+    energy: '> ⚠️ EXHAUSTED! You need to rest.',
+  };
+  Object.keys(LOW_STAT_WARNINGS).forEach(stat => {
+    if (gameState.stats[stat] <= 25) addLog(LOW_STAT_WARNINGS[stat], 'danger');
+  });
+
+  const thirstDrain = Math.round(10 * (mods.thirstDrain || 1));
   const warmthDrain = Math.round(warmthBase * (mods.warmthDrain || 1));
   addLog(
-    `> Phase end. [Hunger −8, Thirst −${thirstDrain}, Energy −6, Warmth −${warmthDrain}]`,
+    `> Phase end. [Hunger −8, Thirst −${thirstDrain}, Energy −5, Warmth −${warmthDrain}]`,
     'info'
   );
 
@@ -730,8 +784,9 @@ function endPhase() {
   // New phase log entry with flavor
   addLog(`> DAY ${gameState.day} — ${gameState.phase.toUpperCase()}. ${phaseFlavorText()}`, 'info');
 
-  // Random event (30% chance at each phase transition)
-  if (Math.random() < 0.30) {
+  // Random event (25% chance per phase; no event on Day 1 morning→afternoon)
+  const isGracePeriod = gameState.day === 1 && gameState.phase === 'afternoon';
+  if (!isGracePeriod && Math.random() < 0.25) {
     setTimeout(triggerRandomEvent, 400);
   }
 
@@ -1114,18 +1169,18 @@ function clearSavedGame() {
 function injectVignette() {
   const style = document.createElement('style');
   style.textContent = `
-    .vignette-danger::before {
+    body.vignette-danger::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at center, transparent 35%, rgba(239,68,68,0.28) 100%);
       pointer-events: none;
+      box-shadow: inset 0 0 80px 20px rgba(239,68,68,0.35);
+      animation: vignettePulse 1.5s ease-in-out infinite alternate;
       z-index: 9998;
-      animation: vignette-pulse 2s ease-in-out infinite;
     }
-    @keyframes vignette-pulse {
-      0%, 100% { opacity: 0.5; }
-      50%       { opacity: 1;   }
+    @keyframes vignettePulse {
+      from { box-shadow: inset 0 0 80px 20px rgba(239,68,68,0.2); }
+      to   { box-shadow: inset 0 0 80px 20px rgba(239,68,68,0.55); }
     }
   `;
   document.head.appendChild(style);
@@ -1201,16 +1256,21 @@ function injectFoodPicker() {
 function injectEndPhaseButton() {
   const grid = document.querySelector('.actions-grid');
   if (!grid) return;
-  const btn  = document.createElement('button');
-  btn.id     = 'btn-end-phase';
+
+  const container = document.createElement('div');
+  container.id = 'end-phase-container';
+  container.style.cssText = 'grid-column:1 / -1; margin-top:0.3rem;';
+
+  const btn = document.createElement('button');
+  btn.id        = 'btn-end-phase';
   btn.className = 'action-btn';
   btn.setAttribute('aria-label', 'End current phase and advance time');
+  btn.title = 'End this phase and advance to the next time of day.';
   Object.assign(btn.style, {
-    gridColumn:     '1 / -1',
+    width:          '100%',
     borderColor:    '#f97316',
     color:          '#f97316',
     justifyContent: 'center',
-    marginTop:      '0.3rem',
   });
   btn.innerHTML = `
     <span class="action-btn__icon" aria-hidden="true">⏭️</span>
@@ -1218,8 +1278,58 @@ function injectEndPhaseButton() {
       font-family:'Press Start 2P',monospace;
       font-size:0.42rem;letter-spacing:0.06em;text-align:center;
     ">END PHASE</span>`;
-  btn.addEventListener('click', endPhase);
-  grid.appendChild(btn);
+
+  btn.addEventListener('click', () => {
+    const critStat = Object.keys(gameState.stats).find(s => gameState.stats[s] <= 25);
+    if (critStat) {
+      showEndPhaseConfirmation(container, btn, critStat);
+    } else {
+      endPhase();
+    }
+  });
+
+  container.appendChild(btn);
+  grid.appendChild(container);
+}
+
+function showEndPhaseConfirmation(container, origBtn, stat) {
+  const warning = document.createElement('div');
+  Object.assign(warning.style, {
+    background: '#1a1a2e',
+    border:     '2px solid #f97316',
+    boxShadow:  '3px 3px 0 #000',
+    padding:    '0.65rem 0.75rem',
+  });
+  warning.innerHTML = `
+    <p style="font-family:'Press Start 2P',monospace;font-size:0.38rem;
+      color:#f97316;line-height:1.8;margin-bottom:0.45rem;letter-spacing:0.05em;">
+      ⚠️ ${stat.toUpperCase()} IS CRITICAL
+    </p>
+    <p style="font-family:'VT323',monospace;font-size:1.05rem;
+      color:#94a3b8;line-height:1.4;margin-bottom:0.65rem;">
+      End phase anyway?
+    </p>
+    <div style="display:flex;gap:0.5rem;">
+      <button id="end-phase-confirm" style="
+        font-family:'Press Start 2P',monospace;font-size:0.34rem;
+        background:#f97316;color:#000;border:2px solid #000;
+        padding:0.45rem 0.65rem;cursor:pointer;box-shadow:2px 2px 0 #000;
+        border-radius:0;letter-spacing:0.05em;line-height:1.8;">CONTINUE</button>
+      <button id="end-phase-cancel" style="
+        font-family:'Press Start 2P',monospace;font-size:0.34rem;
+        background:#1a1a2e;color:#94a3b8;border:2px solid #475569;
+        padding:0.45rem 0.65rem;cursor:pointer;box-shadow:2px 2px 0 #000;
+        border-radius:0;letter-spacing:0.05em;line-height:1.8;">CANCEL</button>
+    </div>`;
+
+  container.innerHTML = '';
+  container.appendChild(warning);
+
+  document.getElementById('end-phase-confirm').addEventListener('click', endPhase);
+  document.getElementById('end-phase-cancel').addEventListener('click', () => {
+    container.innerHTML = '';
+    container.appendChild(origBtn);
+  });
 }
 
 function wireButtons() {
@@ -1301,7 +1411,7 @@ function init() {
     maxAp:      3,
     stats:      { health: 80, hunger: 80, thirst: 80, energy: 80, warmth: 80 },
     inventory: {
-      wood: 0, rope: 0, cloth: 0, vine: 0, stone: 0, stick: 0,
+      wood: 3, rope: 0, cloth: 1, vine: 0, stone: 0, stick: 2,
       rawFish: 0, cookedFish: 0, berries: 0, mushroom: 0, badMushroom: 0,
       rawWater: 0,
       fishingRod: false, bandage: 0, purifiedWater: 0,
