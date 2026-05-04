@@ -132,7 +132,7 @@ function renderBanner() {
   document.getElementById('phase-label').textContent = PHASE_LABELS[gameState.phase];
 
   // Sky gradient class — flash on phase change
-  const banner = document.getElementById('sky-banner');
+  const banner = document.getElementById('game-banner');
   const newPhaseClass = PHASE_CLASSES[gameState.phase];
   const isPhaseChange = !banner.classList.contains(newPhaseClass);
   banner.classList.remove('phase-morning', 'phase-afternoon', 'phase-dusk', 'phase-night');
@@ -277,12 +277,20 @@ function setBiomeScene(b) {
 
   const rainEl = document.getElementById('rain-effect');
   const snowEl = document.getElementById('snow-effect');
+  const mistEl = document.getElementById('mist-effect');
   if (!rainEl || !snowEl) return;
 
   rainEl.innerHTML = '';
   snowEl.innerHTML = '';
+  if (mistEl) { mistEl.innerHTML = ''; mistEl.style.display = 'none'; }
   rainEl.style.display = 'none';
   snowEl.style.display = 'none';
+
+  // Remove old biome-specific effects from banner
+  const banner = document.getElementById('game-banner');
+  if (banner) {
+    banner.querySelectorAll('.heat-shimmer, .firefly').forEach(el => el.remove());
+  }
 
   if (b === 'rainforest') {
     for (let i = 0; i < 28; i++) {
@@ -295,6 +303,18 @@ function setBiomeScene(b) {
       rainEl.appendChild(drop);
     }
     rainEl.style.display = 'block';
+    // Mist layers
+    if (mistEl) {
+      for (let i = 0; i < 3; i++) {
+        const m = document.createElement('div');
+        m.className = 'mist-layer';
+        m.style.bottom            = `${30 + i * 22}px`;
+        m.style.animationDuration = `${18 + i * 7}s`;
+        m.style.animationDelay    = `${i * 3}s`;
+        mistEl.appendChild(m);
+      }
+      mistEl.style.display = 'block';
+    }
   }
 
   if (b === 'tundra') {
@@ -309,10 +329,46 @@ function setBiomeScene(b) {
     }
     snowEl.style.display = 'block';
   }
+
+  if (b === 'desert' && banner) {
+    const shimmer = document.createElement('div');
+    shimmer.className = 'heat-shimmer';
+    banner.appendChild(shimmer);
+  }
+
+  if (b === 'swamp' && banner) {
+    // Mist layers for swamp
+    if (mistEl) {
+      for (let i = 0; i < 2; i++) {
+        const m = document.createElement('div');
+        m.className = 'mist-layer';
+        m.style.bottom            = `${10 + i * 18}px`;
+        m.style.animationDuration = `${22 + i * 8}s`;
+        m.style.animationDelay    = `${i * 5}s`;
+        mistEl.appendChild(m);
+      }
+      mistEl.style.display = 'block';
+    }
+    // Fireflies
+    const flyPositions = [
+      { top: '70%', left: '12%' }, { top: '60%', left: '28%' },
+      { top: '75%', left: '45%' }, { top: '65%', left: '62%' },
+      { top: '72%', left: '78%' }, { top: '58%', left: '90%' },
+    ];
+    flyPositions.forEach((pos, i) => {
+      const fly = document.createElement('div');
+      fly.className = 'firefly';
+      fly.style.top                 = pos.top;
+      fly.style.left                = pos.left;
+      fly.style.animationDuration   = `${1.5 + i * 0.4}s`;
+      fly.style.animationDelay      = `${i * 0.6}s`;
+      banner.appendChild(fly);
+    });
+  }
 }
 
 function updateScenePhase(phase) {
-  const scene = document.getElementById('game-scene');
+  const scene = document.getElementById('game-banner');
   if (!scene) return;
   scene.classList.remove('phase-morning', 'phase-afternoon', 'phase-dusk', 'phase-night');
   scene.classList.add(PHASE_CLASSES[phase]);
@@ -334,24 +390,42 @@ function updateCampfireSprite() {
   if (!el) return;
   el.innerHTML = '';
 
+  // Night glow effect
+  if (gameState.phase === 'night' && gameState.fireActive) {
+    el.classList.add('night-glow');
+  } else {
+    el.classList.remove('night-glow');
+  }
+
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:relative;width:48px;height:56px;';
+  wrap.style.cssText = 'position:relative;width:72px;height:84px;';
 
   if (gameState.fireActive) {
     wrap.innerHTML = `
-      <div style="position:absolute;bottom:0;left:8px;width:32px;height:8px;background:#5a3a0a;box-shadow:2px 2px 0 #000;"></div>
-      <div style="position:absolute;bottom:4px;left:12px;width:24px;height:6px;background:#7a4a0a;"></div>
-      <div style="position:absolute;bottom:8px;left:20px;width:8px;height:24px;background:#ef4444;animation:flicker 0.4s steps(2) infinite;"></div>
-      <div style="position:absolute;bottom:8px;left:13px;width:8px;height:18px;background:#f97316;animation:flicker 0.55s steps(2) infinite 0.15s;"></div>
-      <div style="position:absolute;bottom:8px;left:27px;width:8px;height:14px;background:#f97316;animation:flicker 0.5s steps(2) infinite 0.3s;"></div>
-      <div style="position:absolute;bottom:18px;left:21px;width:6px;height:12px;background:#fbbf24;animation:flicker 0.35s steps(2) infinite 0.1s;"></div>
-      <div style="position:absolute;bottom:6px;left:16px;width:16px;height:6px;background:#fbbf24;opacity:0.5;box-shadow:0 0 8px rgba(251,191,36,0.7);"></div>`;
+      <div style="position:absolute;bottom:0;left:6px;width:60px;height:10px;background:#5a5a5a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:0;left:6px;width:14px;height:12px;background:#6a6a6a;"></div>
+      <div style="position:absolute;bottom:0;left:22px;width:14px;height:10px;background:#7a7a7a;"></div>
+      <div style="position:absolute;bottom:0;left:38px;width:14px;height:12px;background:#6a6a6a;"></div>
+      <div style="position:absolute;bottom:0;left:54px;width:12px;height:10px;background:#7a7a7a;"></div>
+      <div style="position:absolute;bottom:8px;left:6px;width:60px;height:10px;background:#5a3a0a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:14px;left:14px;width:44px;height:8px;background:#4a2a08;"></div>
+      <div style="position:absolute;bottom:20px;left:22px;width:28px;height:6px;background:#ff6600;opacity:0.85;"></div>
+      <div style="position:absolute;bottom:24px;left:12px;width:14px;height:36px;background:#ef4444;animation:flicker 0.4s steps(2) infinite;"></div>
+      <div style="position:absolute;bottom:24px;left:46px;width:14px;height:32px;background:#dc2626;animation:flicker 0.5s steps(2) infinite 0.2s;"></div>
+      <div style="position:absolute;bottom:24px;left:22px;width:16px;height:44px;background:#f97316;animation:flicker 0.45s steps(2) infinite 0.1s;"></div>
+      <div style="position:absolute;bottom:24px;left:34px;width:16px;height:40px;background:#ea580c;animation:flicker 0.55s steps(2) infinite 0.3s;"></div>
+      <div style="position:absolute;bottom:30px;left:28px;width:16px;height:36px;background:#fbbf24;animation:flicker 0.35s steps(2) infinite 0.05s;"></div>
+      <div style="position:absolute;bottom:44px;left:30px;width:12px;height:20px;background:#fef9c3;animation:flicker 0.3s steps(2) infinite 0.15s;"></div>
+      <div style="position:absolute;bottom:10px;left:10px;width:52px;height:10px;background:rgba(251,191,36,0.55);box-shadow:0 0 16px rgba(251,191,36,0.8);"></div>`;
   } else {
     wrap.innerHTML = `
-      <div style="position:absolute;bottom:0;left:8px;width:32px;height:8px;background:#2a1a0a;box-shadow:2px 2px 0 #000;"></div>
-      <div style="position:absolute;bottom:0;left:14px;width:20px;height:4px;background:#5a5a5a;"></div>
-      <div style="position:absolute;bottom:8px;left:20px;width:4px;height:8px;background:rgba(150,150,150,0.55);animation:smoke-rise 2s ease-out infinite;"></div>
-      <div style="position:absolute;bottom:8px;left:26px;width:4px;height:8px;background:rgba(150,150,150,0.4);animation:smoke-rise 2.5s ease-out infinite 0.8s;"></div>`;
+      <div style="position:absolute;bottom:0;left:6px;width:60px;height:10px;background:#3a3a3a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:0;left:6px;width:14px;height:12px;background:#4a4a4a;"></div>
+      <div style="position:absolute;bottom:0;left:38px;width:14px;height:12px;background:#4a4a4a;"></div>
+      <div style="position:absolute;bottom:8px;left:6px;width:60px;height:10px;background:#2a1a0a;box-shadow:2px 2px 0 #000;"></div>
+      <div style="position:absolute;bottom:14px;left:14px;width:44px;height:6px;background:#6a6a6a;"></div>
+      <div style="position:absolute;bottom:22px;left:30px;width:6px;height:12px;background:rgba(150,150,150,0.55);animation:smoke-rise 2s ease-out infinite;"></div>
+      <div style="position:absolute;bottom:22px;left:38px;width:6px;height:12px;background:rgba(150,150,150,0.4);animation:smoke-rise 2.5s ease-out infinite 0.8s;"></div>`;
   }
 
   el.appendChild(wrap);
