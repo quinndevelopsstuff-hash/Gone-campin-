@@ -344,7 +344,9 @@ function renderActions() {
          gatorFlag ? 'Something lurks in the water' : undefined);
 
   // repairShelter now costs 1 AP; explore stays at 2 AP
-  setBtn('btn-repair-shelter', isNight || ap < 1);
+  setBtn('btn-repair-shelter',
+         isNight || ap < 1 || gameState.inventory.improvedShelter,
+         gameState.inventory.improvedShelter ? 'Shelter fully built' : undefined);
   setBtn('btn-explore',        isNight || ap < 2);
 
   // Fish: needs rod (basic or pro) + daytime + 2 AP
@@ -354,14 +356,17 @@ function renderActions() {
          !hasRod ? 'Requires Fishing Rod' : 'Unavailable');
 
   // Tend fire: night only, needs AP and wood (or torch)
-  const noFuel = inventory.wood < 1 && inventory.torch < 1;
-  setBtn('btn-tend-fire', !isNight || ap < 1 || noFuel,
-         !isNight ? 'Night phase only' : noFuel ? 'Need wood ×1 or torch' : undefined);
+  const canTendFire = inventory.wood >= 1 || inventory.torch > 0;
+  setBtn('btn-tend-fire', !isNight || ap < 1 || !canTendFire,
+         !isNight     ? 'Night phase only' :
+         !canTendFire ? 'Need wood or torch' : undefined);
 
   // Free (0 AP) actions
-  const hasFood = ['cookedFish', 'berries', 'mushroom', 'rawFish', 'badMushroom',
-                   'bandage', 'jerky', 'herbalTea', 'poultice', 'antidote', 'splint']
-    .some(k => inventory[k] > 0);
+  const hasFood = [
+    'cookedFish', 'berries', 'mushroom', 'badMushroom',
+    'rawFish', 'bandage', 'jerky', 'herbalTea',
+    'poultice', 'antidote', 'splint'
+  ].some(k => inventory[k] > 0);
   setBtn('btn-eat',   !hasFood,                    !hasFood ? 'No food available' : undefined);
   setBtn('btn-drink', inventory.purifiedWater <= 0, inventory.purifiedWater <= 0 ? 'No purified water' : undefined);
 }
@@ -651,6 +656,10 @@ function fetchWater() {
 }
 
 function repairShelter() {
+  if (gameState.inventory.improvedShelter) {
+    addLog('> Shelter is already fully improved.', 'info');
+    return;
+  }
   if (gameState.inventory.wood < 2) {
     addLog('> Not enough wood. Need wood ×2.', 'warning');
     return;
@@ -658,7 +667,12 @@ function repairShelter() {
   if (!spendAP(1)) return;
   gameState.inventory.wood -= 2;
   gameState.shelterLevel = Math.min(2, gameState.shelterLevel + 1);
-  addLog('> You reinforce the shelter. It looks sturdier.', 'success');
+  if (gameState.shelterLevel >= 2) {
+    gameState.inventory.improvedShelter = true;
+    addLog('> Shelter fully reinforced! Night warmth drain reduced.', 'success');
+  } else {
+    addLog('> You reinforce the shelter. It looks sturdier.', 'success');
+  }
   renderAll();
 }
 
