@@ -101,7 +101,12 @@ function spendAP(cost) {
 // ── LOGGING ──────────────────────────────────────────────────────────────────
 
 function addLog(message, type = 'info') {
-  gameState.log.unshift({ message, type });       // newest first
+  const phaseAbbr = { morning: 'AM', afternoon: 'PM', night: 'N' };
+  const tag = gameState
+    ? `[D${gameState.day}-${phaseAbbr[gameState.phase] || '?'}]`
+    : '';
+  const stamped = tag ? `${tag} ${message}` : message;
+  gameState.log.unshift({ message: stamped, type });
   if (gameState.log.length > 60) gameState.log.pop();
 }
 
@@ -126,10 +131,18 @@ function renderBanner() {
   // Phase label
   document.getElementById('phase-label').textContent = PHASE_LABELS[gameState.phase];
 
-  // Sky gradient class
+  // Sky gradient class — flash on phase change
   const banner = document.getElementById('sky-banner');
+  const newPhaseClass = PHASE_CLASSES[gameState.phase];
+  const isPhaseChange = !banner.classList.contains(newPhaseClass);
   banner.classList.remove('phase-morning', 'phase-afternoon', 'phase-dusk', 'phase-night');
-  banner.classList.add(PHASE_CLASSES[gameState.phase]);
+  banner.classList.add(newPhaseClass);
+  if (isPhaseChange) {
+    banner.classList.remove('phase-flash');
+    void banner.offsetWidth;
+    banner.classList.add('phase-flash');
+    setTimeout(() => banner.classList.remove('phase-flash'), 350);
+  }
 
   // Sun / moon arc dots
   const targetPos = ARC_POS[gameState.phase];
@@ -226,6 +239,7 @@ function renderInventory() {
     'inv-vine':           inv.vine,
     'inv-stone':          inv.stone,
     'inv-stick':          inv.stick,
+    'inv-raw-water':      inv.rawWater,
     'inv-raw-fish':       inv.rawFish,
     'inv-cooked-fish':    inv.cookedFish,
     'inv-berries':        inv.berries,
@@ -248,6 +262,7 @@ function renderLog() {
   logEl.innerHTML = gameState.log.slice(0, 20)
     .map(e => `<span class="log-entry log-${e.type}">${e.message}</span>`)
     .join('');
+  logEl.scrollTop = 0;
 }
 
 // ── SCENE BANNER ──────────────────────────────────────────────────────────────

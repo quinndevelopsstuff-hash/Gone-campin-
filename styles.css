@@ -222,7 +222,7 @@ a:hover {
 .stat-bar__fill {
   height: 100%;
   border-radius: 0;
-  transition: width 0.3s steps(12);
+  transition: width 0.5s ease;
 }
 
 .stat-bar__fill--health  { background: var(--pixel-red); }

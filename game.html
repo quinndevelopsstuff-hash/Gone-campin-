@@ -1045,6 +1045,22 @@
     @media (max-width: 700px) {
       #game-scene { height: 120px; }
     }
+
+    /* Disabled button dim */
+    .action-btn:disabled {
+      opacity: 0.35;
+    }
+
+    /* Phase transition flash */
+    @keyframes flashWhite {
+      0%   { filter: brightness(1); }
+      50%  { filter: brightness(2.2); }
+      100% { filter: brightness(1); }
+    }
+
+    .phase-flash {
+      animation: flashWhite 0.35s ease;
+    }
   </style>
 </head>
 <body>
@@ -1495,14 +1511,14 @@
       <div class="actions-grid" role="group" aria-label="Available actions">
 
         <!-- Gather Wood -->
-        <button class="action-btn" id="btn-gather-wood" aria-label="Gather Wood — costs 1 AP">
+        <button class="action-btn" id="btn-gather-wood" aria-label="Gather Wood — costs 1 AP" title="Cost: 1 AP — Gather 2-4 wood from nearby trees.">
           <span class="action-btn__icon" aria-hidden="true">🪵</span>
           <span class="action-btn__label">Gather Wood</span>
           <span class="action-btn__ap">1 AP</span>
         </button>
 
         <!-- Forage -->
-        <button class="action-btn" id="btn-forage" aria-label="Forage — costs 1 AP">
+        <button class="action-btn" id="btn-forage" aria-label="Forage — costs 1 AP" title="Cost: 1 AP — Search for food. Watch out for bad mushrooms.">
           <span class="action-btn__icon" aria-hidden="true">🍄</span>
           <span class="action-btn__label">Forage</span>
           <span class="action-btn__ap">1 AP</span>
@@ -1514,35 +1530,36 @@
                 disabled
                 aria-disabled="true"
                 aria-label="Fish — disabled, requires fishing rod"
-                data-tooltip="Requires Fishing Rod">
+                data-tooltip="Requires Fishing Rod"
+                title="Cost: 2 AP — Catch 2-3 fish. Requires fishing rod.">
           <span class="action-btn__icon" aria-hidden="true">🎣</span>
           <span class="action-btn__label">Fish</span>
           <span class="action-btn__ap">2 AP</span>
         </button>
 
         <!-- Fetch Water -->
-        <button class="action-btn" id="btn-fetch-water" aria-label="Fetch Water — costs 1 AP">
+        <button class="action-btn" id="btn-fetch-water" aria-label="Fetch Water — costs 1 AP" title="Cost: 1 AP — Collect 2-3 raw water. Must be purified before drinking.">
           <span class="action-btn__icon" aria-hidden="true">💧</span>
           <span class="action-btn__label">Fetch Water</span>
           <span class="action-btn__ap">1 AP</span>
         </button>
 
         <!-- Repair Shelter -->
-        <button class="action-btn" id="btn-repair-shelter" aria-label="Repair Shelter — costs 2 AP">
+        <button class="action-btn" id="btn-repair-shelter" aria-label="Repair Shelter — costs 1 AP" title="Cost: 1 AP — Reinforce shelter. Reduces warmth drain at night. Requires wood ×2.">
           <span class="action-btn__icon" aria-hidden="true">🏕️</span>
           <span class="action-btn__label">Repair Shelter</span>
-          <span class="action-btn__ap">2 AP</span>
+          <span class="action-btn__ap">1 AP</span>
         </button>
 
         <!-- Explore -->
-        <button class="action-btn" id="btn-explore" aria-label="Explore — costs 2 AP">
+        <button class="action-btn" id="btn-explore" aria-label="Explore — costs 2 AP" title="Cost: 2 AP — Search the area. Find loot or trigger a random event.">
           <span class="action-btn__icon" aria-hidden="true">🔍</span>
           <span class="action-btn__label">Explore</span>
           <span class="action-btn__ap">2 AP</span>
         </button>
 
         <!-- Rest -->
-        <button class="action-btn" id="btn-rest" aria-label="Rest — costs 1 AP">
+        <button class="action-btn" id="btn-rest" aria-label="Rest — costs 1 AP" title="Cost: 1 AP — Rest and recover. [+15 Energy, +5 Health]">
           <span class="action-btn__icon" aria-hidden="true">💤</span>
           <span class="action-btn__label">Rest</span>
           <span class="action-btn__ap">1 AP</span>
@@ -1554,21 +1571,22 @@
                 disabled
                 aria-disabled="true"
                 aria-label="Tend Fire — night only"
-                data-tooltip="Night phase only">
+                data-tooltip="Night phase only"
+                title="Cost: 1 AP — Feed the fire. Night only. Requires 1 wood. [+10 Warmth]">
           <span class="action-btn__icon" aria-hidden="true">🔥</span>
           <span class="action-btn__label">Tend Fire</span>
           <span class="action-btn__ap">1 AP</span>
         </button>
 
         <!-- Eat -->
-        <button class="action-btn" id="btn-eat" aria-label="Eat — free action">
+        <button class="action-btn" id="btn-eat" aria-label="Eat — free action" title="Cost: 0 AP — Eat available food. Restores Hunger. Also use bandages here.">
           <span class="action-btn__icon" aria-hidden="true">🍖</span>
           <span class="action-btn__label">Eat</span>
           <span class="action-btn__ap">0 AP</span>
         </button>
 
         <!-- Drink -->
-        <button class="action-btn" id="btn-drink" aria-label="Drink — free action">
+        <button class="action-btn" id="btn-drink" aria-label="Drink — free action" title="Cost: 0 AP — Drink purified water. [+25 Thirst]">
           <span class="action-btn__icon" aria-hidden="true">💧</span>
           <span class="action-btn__label">Drink</span>
           <span class="action-btn__ap">0 AP</span>
@@ -1578,7 +1596,8 @@
         <button class="action-btn"
                 id="craft-open-btn"
                 aria-label="Open crafting bench"
-                aria-haspopup="dialog">
+                aria-haspopup="dialog"
+                title="Cost: 0 AP — Open the crafting bench.">
           <span class="action-btn__icon" aria-hidden="true">🔨</span>
           <span class="action-btn__label">Craft</span>
           <span class="action-btn__ap">0 AP</span>
@@ -1615,56 +1634,61 @@
 
       <!-- Materials -->
       <div id="inv-materials" class="inv-pane active" role="tabpanel" aria-labelledby="tab-materials">
-        <div class="inv-item" data-item="wood">
+        <div class="inv-item" data-item="wood" title="Used for: fire, shelter, purifying water, Signal Fire">
           <span class="inv-item__icon" aria-hidden="true">🪵</span>
           <span class="inv-item__name">Wood</span>
           <span class="inv-item__count" id="inv-wood">x0</span>
         </div>
-        <div class="inv-item" data-item="rope">
+        <div class="inv-item" data-item="rope" title="Used for: improved shelter">
           <span class="inv-item__icon" aria-hidden="true">🪢</span>
           <span class="inv-item__name">Rope</span>
           <span class="inv-item__count" id="inv-rope">x0</span>
         </div>
-        <div class="inv-item" data-item="cloth">
+        <div class="inv-item" data-item="cloth" title="Used for: bandage, Signal Fire">
           <span class="inv-item__icon" aria-hidden="true">🧵</span>
           <span class="inv-item__name">Cloth</span>
           <span class="inv-item__count" id="inv-cloth">x0</span>
         </div>
-        <div class="inv-item" data-item="vine">
+        <div class="inv-item" data-item="vine" title="Used for: fishing rod">
           <span class="inv-item__icon" aria-hidden="true">🌿</span>
           <span class="inv-item__name">Vine</span>
           <span class="inv-item__count" id="inv-vine">x0</span>
         </div>
-        <div class="inv-item" data-item="stone">
+        <div class="inv-item" data-item="stone" title="Used for: Signal Fire">
           <span class="inv-item__icon" aria-hidden="true">🪨</span>
           <span class="inv-item__name">Stone</span>
           <span class="inv-item__count" id="inv-stone">x0</span>
         </div>
-        <div class="inv-item" data-item="stick">
+        <div class="inv-item" data-item="stick" title="Used for: bandage, fishing rod">
           <span class="inv-item__icon" aria-hidden="true">🌾</span>
           <span class="inv-item__name">Stick</span>
           <span class="inv-item__count" id="inv-stick">x0</span>
+        </div>
+        <div class="inv-item" data-item="raw-water" title="Unpurified — craft Purified Water before drinking">
+          <span class="inv-item__icon" aria-hidden="true">🪣</span>
+          <span class="inv-item__name">Raw Water</span>
+          <span class="inv-item__count" id="inv-raw-water">×0</span>
         </div>
       </div>
 
       <!-- Food -->
       <div id="inv-food" class="inv-pane" role="tabpanel" aria-labelledby="tab-food">
-        <div class="inv-item" data-item="raw-fish">
+        <div class="inv-item" data-item="raw-fish" title="Eat for +15 Hunger — 40% chance of illness">
           <span class="inv-item__icon" aria-hidden="true">🐟</span>
           <span class="inv-item__name">Raw Fish</span>
           <span class="inv-item__count" id="inv-raw-fish">x0</span>
         </div>
-        <div class="inv-item" data-item="cooked-fish">
+        <div class="inv-item" data-item="cooked-fish" title="Eat for +25 Hunger">
           <span class="inv-item__icon" aria-hidden="true">🍣</span>
           <span class="inv-item__name">Cooked Fish</span>
           <span class="inv-item__count" id="inv-cooked-fish">x0</span>
         </div>
-        <div class="inv-item" data-item="berries">
+        <div class="inv-item" data-item="berries" title="Eat for +15 Hunger">
           <span class="inv-item__icon" aria-hidden="true">🫐</span>
           <span class="inv-item__name">Berries</span>
           <span class="inv-item__count" id="inv-berries">x0</span>
         </div>
-        <div class="inv-item" data-item="mushroom">
+        <div class="inv-item" data-item="mushroom" title="Eat for +20 Hunger — could be toxic!">
           <span class="inv-item__icon" aria-hidden="true">🍄</span>
           <span class="inv-item__name">Mushroom</span>
           <span class="inv-item__count" id="inv-mushroom">x0</span>
@@ -1673,17 +1697,17 @@
 
       <!-- Crafted -->
       <div id="inv-crafted" class="inv-pane" role="tabpanel" aria-labelledby="tab-crafted">
-        <div class="inv-item" data-item="fishing-rod">
+        <div class="inv-item" data-item="fishing-rod" title="Unlocks the Fish action">
           <span class="inv-item__icon" aria-hidden="true">🎣</span>
           <span class="inv-item__name">Fishing Rod</span>
           <span class="inv-item__count" id="inv-fishing-rod">x0</span>
         </div>
-        <div class="inv-item" data-item="bandage">
+        <div class="inv-item" data-item="bandage" title="Use via Eat action — restores +25 Health">
           <span class="inv-item__icon" aria-hidden="true">🩹</span>
           <span class="inv-item__name">Bandage</span>
           <span class="inv-item__count" id="inv-bandage">x0</span>
         </div>
-        <div class="inv-item" data-item="purified-water">
+        <div class="inv-item" data-item="purified-water" title="Safe to drink [+25 Thirst]">
           <span class="inv-item__icon" aria-hidden="true">🫙</span>
           <span class="inv-item__name">Purified Water</span>
           <span class="inv-item__count" id="inv-purified-water">x0</span>
