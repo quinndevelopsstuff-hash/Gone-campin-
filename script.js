@@ -1853,17 +1853,9 @@ function init() {
   biome        = localStorage.getItem('biome')        || 'flatwoods';
 
   const joeNames = ['joe', 'joe bart', 'joe bartolozzi'];
-  if (joeNames.includes(survivorName.toLowerCase().trim())) {
-    const audio = new Audio();
-    audio.src = 'osam14aEpNRmgInQ2BFoAe4DAaVaCEcGf3EEg3.mp3';
-    audio.volume = 0.8;
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        console.log('Joe audio failed:', err);
-      });
-    }
-  }
+  const joeAudio = joeNames.includes(survivorName.toLowerCase().trim())
+    ? (() => { const a = new Audio('osam14aEpNRmgInQ2BFoAe4DAaVaCEcGf3EEg3.mp3'); a.volume = 0.8; return a; })()
+    : null;
 
   try {
     const raw = localStorage.getItem('biomeModifiers');
@@ -1929,12 +1921,12 @@ function init() {
   // Initial render
   renderAll();
 
-  showBiomeIntro();
+  showBiomeIntro(joeAudio);
 
   console.log('[Gone Campin\'] Init — player:', survivorName, '| biome:', biome, '| mods:', biomeModifiers);
 }
 
-function showBiomeIntro() {
+function showBiomeIntro(joeAudio) {
   const overlay   = document.getElementById('intro-overlay');
   const intro     = BIOME_INTROS[biome] || BIOME_INTROS.flatwoods;
   const biomeName = BIOME_NAMES[biome] || biome;
@@ -1997,6 +1989,7 @@ function showBiomeIntro() {
 
   function dismissIntro() {
     continueBtn.removeEventListener('click', dismissIntro);
+    if (joeAudio) joeAudio.play().catch(() => {});
     overlay.style.transition = 'opacity 0.8s ease';
     overlay.style.opacity = '0';
     setTimeout(() => { overlay.style.display = 'none'; }, 800);
